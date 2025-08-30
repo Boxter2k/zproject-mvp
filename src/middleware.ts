@@ -24,9 +24,6 @@ export function middleware(req: NextRequest) {
 // Aplica a todo el sitio excepto rutas técnicas/activos
 export const config = {
   matcher: [
-    // Cualquier ruta que NO empiece por los paths excluidos:
-    // _next/static, _next/image, assets, api/webhooks (si los tuvieras públicos),
-    // y archivos comunes en la raíz.
     "/((?!_next/static|_next/image|favicon\\.ico|robots\\.txt|sitemap\\.xml|assets/).*)",
   ],
 };
