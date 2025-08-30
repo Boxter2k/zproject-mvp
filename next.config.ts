@@ -1,18 +1,9 @@
+// next.config.ts
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  async rewrites() {
-    return [
-      {
-        source: '/service-offer/:path*',
-        destination: 'https://myzproject.com/service-offer/:path*',
-      },
-      {
-        source: '/posts/:path*',
-        destination: 'https://myzproject.com/posts/:path*',
-      }
-    ];
-  },
+  // Rewrites eliminados para evitar 508 INFINITE_LOOP:
+  // El destino apuntaba al mismo dominio (myzproject.com) y entraba en bucle.
 };
 
 export default nextConfig;
