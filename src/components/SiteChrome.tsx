@@ -1,4 +1,3 @@
-// src/components/SiteChrome.tsx
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -30,12 +29,12 @@ export default function SiteChrome({
   useEffect(() => {
     // Escucha el evento emitido por LanguageSwitcher
     function onLangChange(e: Event) {
-      // @ts-expect-error — CustomEvent.detail viene del LanguageSwitcher en runtime
-      const detail = (e as CustomEvent)?.detail;
-      const fromEvent = detail?.lang as string | undefined;
+      // Tipamos el CustomEvent para evitar ts-expect-error
+      const ce = e as CustomEvent<{ lang?: string }>;
+      const fromEvent = typeof ce.detail?.lang === "string" ? ce.detail.lang.toLowerCase() : undefined;
 
       if (fromEvent) {
-        setLang(fromEvent.toLowerCase());
+        setLang(fromEvent);
         return;
       }
 
@@ -46,8 +45,8 @@ export default function SiteChrome({
       } catch {}
     }
 
-    window.addEventListener("zproject:lang-change", onLangChange);
-    return () => window.removeEventListener("zproject:lang-change", onLangChange);
+    window.addEventListener("zproject:lang-change", onLangChange as EventListener);
+    return () => window.removeEventListener("zproject:lang-change", onLangChange as EventListener);
   }, []);
 
   // Cierra el menú móvil al navegar
