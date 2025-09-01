@@ -11,11 +11,17 @@ export const metadata: Metadata = {
   description: "Un santuario para los creadores",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const cookieStore = cookies();
+export default async function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  // ⚠️ Next 15: cookies() es async
+  const cookieStore = await cookies();
 
   // === Idioma (SSR inicial) ===
   const langCookie = (cookieStore.get("zproject_lang")?.value || "en").toLowerCase();
+  // Nota: t() ya no se usa aquí para header/footer; lo hará el cliente en SiteChrome.
   getT(langCookie);
 
   // === Tema (SSR) ===
@@ -24,6 +30,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     | "dark"
     | "system";
 
+  // Snapshot del tema ya resuelto si existe (lo pone el cliente):
   const resolvedSnapshot = cookieStore.get("zproject_theme_resolved")?.value as
     | "light"
     | "dark"
@@ -37,11 +44,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     normalized === "nebula" ? "nebula" :
     normalized === "off" ? "off" : "lava";
 
-  // Favicon / logo según tema resuelto
+  // Favicon SSR: preferimos el snapshot si existe; si no, inferimos con storedTheme (system => light)
   const resolvedForFavicon: "dark" | "light" =
     resolvedSnapshot ?? (storedTheme === "dark" ? "dark" : storedTheme === "light" ? "light" : "light");
 
   const favicon = resolvedForFavicon === "dark" ? "/favicon-dark.png" : "/favicon-light.png";
+
+  // Logo (usa PNGs en /public)
   const logoLight = "/logo-light.png";
   const logoDark = "/logo-dark.png";
   const brandLogo = resolvedForFavicon === "dark" ? logoDark : logoLight;
@@ -50,10 +59,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html
       lang={langCookie}
       data-theme={storedTheme}
+      // Importante: no renderizamos data-resolved-theme en SSR para evitar hydration mismatch.
       suppressHydrationWarning
     >
       <head>
         <link id="favicon" rel="icon" href={favicon} />
+        {/* meta viewport lo suele inyectar Next, pero lo declaramos por seguridad */}
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
       </head>
 
@@ -98,7 +109,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   function resolveTheme(){
     var chosen = html.getAttribute('data-theme') || 'system';
     var resolved = (chosen === 'dark') ? 'dark' : (chosen === 'light' ? 'light' : (prefersDark() ? 'dark' : 'light'));
+    // Seteamos el atributo sólo en cliente (no en SSR) para evitar mismatch
     html.setAttribute('data-resolved-theme', resolved);
+    // Guardamos snapshot para próximos SSR
     try {
       document.cookie = 'zproject_theme_resolved=' + resolved + '; Path=/; Max-Age=31536000; SameSite=Lax';
     } catch (e) {}
@@ -112,14 +125,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   var resolved = resolveTheme();
   setFavicon(resolved);
 
+  // cambia cuando cambia el sistema
   var mq = window.matchMedia('(prefers-color-scheme: dark)');
-  if (mq.addEventListener) {
-    mq.addEventListener('change', function(){
-      var r = resolveTheme();
-      setFavicon(r);
-      window.dispatchEvent(new Event('zproject:theme-change'));
-    });
-  }
+  mq.addEventListener && mq.addEventListener('change', function(){
+    var r = resolveTheme();
+    setFavicon(r);
+    window.dispatchEvent(new Event('zproject:theme-change'));
+  });
+
+  // cambia cuando UI llama applyTheme (desde theme.ts)
   window.addEventListener('zproject:theme-change', function(){
     var r = resolveTheme();
     setFavicon(r);
@@ -220,11 +234,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     mounted = false;
     if(raf) cancelAnimationFrame(raf);
     raf = null;
-    if (ctx) ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx && ctx.clearRect(0,0,canvas.width,canvas.height);
     canvas.style.visibility = 'hidden';
   }
 
-  window.__zstars = { start: start, stop: stop, resize: function(){ if(!mounted) return; size(); makeStars(); } };
+  window.__zstars = { start, stop, resize: function(){ if(!mounted) return; size(); makeStars(); } };
   window.addEventListener('resize', function(){ if(window.__zstars) window.__zstars.resize(); });
   window.addEventListener('zproject:theme-change', function(){ if(window.__zstars && mounted){ window.__zstars.resize(); }});
 })();
@@ -257,7 +271,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     var alpha = parseFloat(cs.getPropertyValue('--nebula-alpha')) || 0.22;
     var blur = parseFloat(cs.getPropertyValue('--nebula-blur')) || 24;
     var speed = parseFloat(cs.getPropertyValue('--nebula-speed')) || 0.05;
-    return { c1: c1, c2: c2, c3: c3, alpha: alpha, blur: blur, speed: speed };
+    return { c1, c2, c3, alpha, blur, speed };
   }
 
   function draw(){
@@ -299,11 +313,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     mounted = false;
     if(raf) cancelAnimationFrame(raf);
     raf = null;
-    if (ctx) ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx && ctx.clearRect(0,0,canvas.width,canvas.height);
     canvas.style.visibility = 'hidden';
   }
 
-  window.__znebula = { start: start, stop: stop, resize: function(){ if(!mounted) return; size(); } };
+  window.__znebula = { start, stop, resize: function(){ if(!mounted) return; size(); } };
   window.addEventListener('resize', function(){ if(window.__znebula) window.__znebula.resize(); });
 })();
         `}</Script>
@@ -314,6 +328,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   var img = document.getElementById('brandLogo');
   if(!img) return;
   var light='${logoLight}', dark='${logoDark}';
+
   function currentMode(){
     var html=document.documentElement;
     var chosen=html.getAttribute('data-theme')||'system';
@@ -322,10 +337,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
   }
   function setLogo(){ var m=currentMode(); img.setAttribute('src', m==='dark' ? dark : light); }
+
   setLogo();
   window.addEventListener('zproject:theme-change', setLogo);
   var mq=window.matchMedia('(prefers-color-scheme: dark)');
-  if (mq.addEventListener) mq.addEventListener('change', setLogo);
+  mq.addEventListener && mq.addEventListener('change', setLogo);
 })();
         `}</Script>
 
@@ -355,38 +371,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <SiteChrome initialLang={langCookie} brandLogo={brandLogo}>
           {children}
         </SiteChrome>
-
-        {/* ======= FIX visual: barras full-bleed en móvil y sin recortes ======= */}
-        <style>{`
-          @media (max-width: 900px) {
-            html, body { overflow-x: hidden; }
-
-            header, .site-header, .topbar, .navbar, .nav,
-            footer, .site-footer, [role="contentinfo"] {
-              position: relative;
-              padding-left: max(16px, env(safe-area-inset-left));
-              padding-right: max(16px, env(safe-area-inset-right));
-              border-radius: 0;
-              overflow: visible; /* no cortar botones */
-            }
-            header::before, .site-header::before, .topbar::before, .navbar::before, .nav::before,
-            footer::before, .site-footer::before, [role="contentinfo"]::before {
-              content: "";
-              position: absolute;
-              left: 50%; transform: translateX(-50%);
-              width: 100vw; top: 0; bottom: 0;
-              background: inherit; border-radius: 0; z-index: -1;
-            }
-            footer, .site-footer, [role="contentinfo"] {
-              padding-bottom: max(16px, env(safe-area-inset-bottom));
-            }
-            header .container, .site-header .container, .topbar .container, .navbar .container, .nav .container,
-            footer .container, .site-footer .container, [role="contentinfo"] .container {
-              max-width: 100%;
-              margin: 0 auto;
-            }
-          }
-        `}</style>
       </body>
     </html>
   );
