@@ -2,8 +2,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Rewrites eliminados para evitar 508 INFINITE_LOOP:
-  // El destino apuntaba al mismo dominio (myzproject.com) y entraba en bucle.
+  // Mantener simple. Sin rewrites para evitar loops.
+  reactStrictMode: true,
+  // (opcional) activa lo que ya usa tu proyecto
+  experimental: {
+    typedRoutes: true,
+  },
 };
 
 export default nextConfig;

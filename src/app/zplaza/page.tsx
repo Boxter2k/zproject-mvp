@@ -4,57 +4,57 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef } from "react";
 import { I18nProvider, useLang } from "../../lib/i18n-client";
 
-function ZTVInner() {
+function ZPlazaInner() {
   const { lang } = useLang();
 
   const T = {
     es: {
       badge: "Próximamente",
-      title: "ZTV",
-      lead: "Algo grande se está preparando en nuestras pantallas.",
-      sub: "El arte nunca volverá a verse igual.",
+      title: "ZPlaza",
+      lead: "Un lugar vivo para descubrir y seguir a creadores con afinidad a ti.",
+      sub: "Colaboraciones espontáneas, oportunidades y momentos que valen la pena.",
       support: "Apoyar",
       back: "Volver al inicio",
-      aria: "ZTV — próximamente",
-      bubbles: ["Luces, cámara… paciencia 🎬", "Preparando algo especial 📺", "Gracias por pasar por ZTV ✨"],
-      burst: ["📺", "🎬", "🎞️", "⭐", "✨"],
-      bg: ["📺", "🎬", "🎞️", "📺", "✨"],
+      aria: "ZPlaza — próximamente",
+      bubbles: ["Nos vemos en la plaza ✨", "Hay vida creativa por aquí 🧩", "Gracias por venir 💚"],
+      burst: ["🧩", "🎨", "🤝", "✨", "🗺️"],
+      bg: ["🧩", "🎨", "🤝", "🧩", "✨"],
     },
     pt: {
       badge: "Em breve",
-      title: "ZTV",
-      lead: "Algo grande está chegando às nossas telas.",
-      sub: "A arte não será mais a mesma.",
+      title: "ZPlaza",
+      lead: "Um lugar vivo para descobrir e seguir criadores com afinidade a você.",
+      sub: "Colaborações espontâneas, oportunidades e bons momentos.",
       support: "Apoiar",
       back: "Voltar ao início",
-      aria: "ZTV — em breve",
-      bubbles: ["Luzes, câmera… paciência 🎬", "Preparando algo especial 📺", "Obrigado por passar ✨"],
-      burst: ["📺", "🎬", "🎞️", "⭐", "✨"],
-      bg: ["📺", "🎬", "🎞️", "📺", "✨"],
+      aria: "ZPlaza — em breve",
+      bubbles: ["Te vejo na praça ✨", "Tem vida criativa por aqui 🧩", "Obrigado pela visita 💚"],
+      burst: ["🧩", "🎨", "🤝", "✨", "🗺️"],
+      bg: ["🧩", "🎨", "🤝", "🧩", "✨"],
     },
     fr: {
       badge: "Bientôt",
-      title: "ZTV",
-      lead: "Quelque chose de grand arrive sur nos écrans.",
-      sub: "L’art ne se verra plus jamais pareil.",
+      title: "ZPlaza",
+      lead: "Un lieu vivant pour découvrir et suivre des créateurs proches de vous.",
+      sub: "Des collaborations spontanées, des opportunités et des moments qui comptent.",
       support: "Soutenir",
       back: "Retour à l’accueil",
-      aria: "ZTV — bientôt",
-      bubbles: ["Lumières, caméra… patience 🎬", "On prépare quelque chose 📺", "Merci de ta visite ✨"],
-      burst: ["📺", "🎬", "🎞️", "⭐", "✨"],
-      bg: ["📺", "🎬", "🎞️", "📺", "✨"],
+      aria: "ZPlaza — bientôt",
+      bubbles: ["On se voit sur la place ✨", "Beaucoup de vie créative ici 🧩", "Merci de ta visite 💚"],
+      burst: ["🧩", "🎨", "🤝", "✨", "🗺️"],
+      bg: ["🧩", "🎨", "🤝", "🧩", "✨"],
     },
     en: {
       badge: "Coming soon",
-      title: "ZTV",
-      lead: "Something big is brewing for our screens.",
-      sub: "Art will never look the same.",
+      title: "ZPlaza",
+      lead: "A lively place to discover and follow creators aligned with you.",
+      sub: "Spontaneous collabs, opportunities, and moments that matter.",
       support: "Support",
       back: "Back to home",
-      aria: "ZTV — coming soon",
-      bubbles: ["Lights, camera… patience 🎬", "Cooking up something 📺", "Thanks for dropping by ✨"],
-      burst: ["📺", "🎬", "🎞️", "⭐", "✨"],
-      bg: ["📺", "🎬", "🎞️", "📺", "✨"],
+      aria: "ZPlaza — coming soon",
+      bubbles: ["See you at the plaza ✨", "Creative life around here 🧩", "Thanks for stopping by 💚"],
+      burst: ["🧩", "🎨", "🤝", "✨", "🗺️"],
+      bg: ["🧩", "🎨", "🤝", "🧩", "✨"],
     },
   } as const;
 
@@ -62,7 +62,7 @@ function ZTVInner() {
 
   // Globo rotando por visita (persistente)
   const bubbleText = useMemo(() => {
-    const key = "z_bubble_idx_ztv";
+    const key = "z_bubble_idx_zplaza";
     const prev = Number(localStorage.getItem(key) || "0");
     const idx = isNaN(prev) ? 0 : prev;
     const txt = L.bubbles[idx % L.bubbles.length];
@@ -122,19 +122,27 @@ function ZTVInner() {
       frame = requestAnimationFrame(() => {
         const r = icon.getBoundingClientRect();
 
-        const targetX = r.left + r.width / 2; // centro del icono
-        const ARROW_LEFT_PX = 18;             // coincide con CSS
-        const EXTRA_LEFT_SHIFT = 8;           // pequeño corrimiento
+        // Centro del icono
+        const targetX = r.left + r.width / 2;
 
+        // Posición de la flecha dentro del globo (coincide con CSS)
+        const ARROW_LEFT_PX = 18;
+
+        // Corrimiento leve a la izquierda
+        const EXTRA_LEFT_SHIFT = 8;
+
+        // Top mínimo bajo el header
         const gapY = 10;
         let top = r.bottom + gapY;
         const minTop = navH + 6;
         if (top < minTop) top = minTop;
 
+        // Left para alinear flecha al centro del icono
         const bubbleBox = bubble.getBoundingClientRect();
         const viewportW = window.innerWidth;
         let left = targetX - ARROW_LEFT_PX - EXTRA_LEFT_SHIFT;
 
+        // Clamp bordes
         const minLeft = 8;
         const maxLeft = Math.max(minLeft, viewportW - bubbleBox.width - 8);
         if (left < minLeft) left = minLeft;
@@ -184,7 +192,7 @@ function ZTVInner() {
         <article className="settings-card ucard" role="status" aria-label={L.aria}>
           <div className="badge ucard-badge">{L.badge}</div>
           <div ref={iconRef} className="ucard-icon" aria-hidden>
-            <span className="ucard-emoji">📺</span>
+            <span className="ucard-emoji">🧩</span>
           </div>
           <h1 className="ucard-title">{L.title}</h1>
           <p className="ucard-lead">{L.lead}</p>
@@ -262,7 +270,7 @@ function ZTVInner() {
         .bg-emo.e1{ left:10%; top:20%; animation-duration:24s; }
         .bg-emo.e2{ left:65%; top:18%; animation-duration:26s; }
         .bg-emo.e3{ left:30%; top:65%; animation-duration:22s; }
-        .bg-emo.e4{ left:78%; top:62%; animation-duration:20%; }
+        .bg-emo.e4{ left:78%; top:62%; animation-duration:20s; }
         .bg-emo.e5{ left:6%;  top:78%; animation-duration:23s; }
         @keyframes drift{ 0%{ transform:translate(0,0) scale(.98) rotate(.5deg); opacity:.13;} 50%{ transform:translate(2vw,-2vh) scale(1.02) rotate(-1deg); opacity:.16;} 100%{transform:translate(-1.2vw,2vh) scale(1) rotate(1deg); opacity:.14;} }
 
@@ -285,10 +293,10 @@ function ZTVInner() {
   );
 }
 
-export default function ZTVPage() {
+export default function ZPlazaPage() {
   return (
     <I18nProvider>
-      <ZTVInner />
+      <ZPlazaInner />
     </I18nProvider>
   );
 }

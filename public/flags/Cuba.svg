@@ -1,0 +1,31 @@
+<!-- Cuba — 3 franjas azules (arriba/centro/abajo), triángulo rojo con estrella blanca a la izquierda -->
+<svg xmlns="http://www.w3.org/2000/svg" width="36" height="24" viewBox="0 0 36 24">
+  <!-- borde redondeado como el resto de flags del proyecto -->
+  <defs>
+    <clipPath id="r"><rect rx="2" width="36" height="24"/></clipPath>
+  </defs>
+  <g clip-path="url(#r)">
+    <!-- Fondo blanco y 3 franjas azules -->
+    <rect width="36" height="24" fill="#ffffff"/>
+    <!-- Cada franja = 24/5 = 4.8 de alto. Dibujamos SOLO las azules: arriba, centro y abajo -->
+    <rect y="0"    width="36" height="4.8"  fill="#002a8f"/>
+    <rect y="9.6"  width="36" height="4.8"  fill="#002a8f"/>
+    <rect y="19.2" width="36" height="4.8"  fill="#002a8f"/>
+
+    <!-- Triángulo rojo en el asta (izquierda) -->
+    <!-- ancho del triángulo ≈ 14 para buena proporción en 36x24 -->
+    <polygon points="0,0 14,12 0,24" fill="#cf142b"/>
+
+    <!-- Estrella blanca de 5 puntas centrada dentro del triángulo -->
+    <g transform="translate(6.8 12)">
+      <polygon fill="#ffffff" points="
+        0,-3.8
+        1.15,-1.2 3.8,-1.2
+        1.55,0.45 2.45,3.1
+        0,1.6
+        -2.45,3.1 -1.55,0.45
+        -3.8,-1.2 -1.15,-1.2
+      "/>
+    </g>
+  </g>
+</svg>
