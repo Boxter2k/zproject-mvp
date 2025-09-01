@@ -3,8 +3,9 @@ import { cookies } from "next/headers";
 import Link from "next/link";
 import Script from "next/script";
 
-export default function ThanksPage() {
-  const lang = (cookies().get("zproject_lang")?.value || "en").toLowerCase();
+export default async function ThanksPage() {
+  // ✅ Next 15: cookies() es asíncrono
+  const lang = ((await cookies()).get("zproject_lang")?.value || "en").toLowerCase();
 
   const L = {
     title:
