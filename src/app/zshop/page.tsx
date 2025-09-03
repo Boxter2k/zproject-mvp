@@ -1,114 +1,175 @@
 "use client";
+
 import Link from "next/link";
 import { I18nProvider, useLang } from "../../lib/i18n-client";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+
+/* =========================================================
+   ZONA DE CONFIGURACIÓN (editas aquí)
+   - Cambia las frases (bubblePhrases) y los iconos (burst/bg)
+   - Puedes agregar/quitar/reordenar libremente.
+   - Las frases rotan UNA A UNA en cada visita/regreso.
+   ========================================================= */
+const TEXTS = {
+  es: {
+    badge: "Próximamente",
+    title: "ZShop",
+    lead:
+      "Muy pronto podrás descubrir creaciones únicas hechas por artistas de todo el mundo.",
+    sub:
+      "Piezas exclusivas que conectan contigo — y apoyan directamente a sus creadores.",
+    support: "Apoyar",
+    back: "Volver al inicio",
+    aria: "ZShop — próximamente",
+    bubblePhrases: [
+      "¡Hola! Gracias por pasar ✨",
+      "Los artistas pueden ofrecer objetos personalizados aquí para sus fans más leales 💕",
+      "¡Bienvenido a la tiendita del arte! 💚",
+      "Yo no vendo humo… vendo magia envuelta en cajas ✨",
+      "Cada clic aquí es un abrazo al creador que lo hizo 🤗",
+      "Tú y yo sabemos que esto quedaría perfecto contigo 😉",
+      "ZShop no es tienda… es tesoro escondido 🗝️",
+      "Nada de prisas, las cosas buenas esperan ⏳",
+      "Pasa cuando quieras… habrá sorpresas 🛍️",
+      "Quien espera, encuentra su pieza 💎",
+      "Lo bueno viene en camino 🚚",
+      // Añade más si quieres…
+    ],
+    burst: ["🛍️", "👕", "🎁", "🧢", "🧸"],
+    bg: ["🛍️", "🎁", "🖼️", "📀", "✨"],
+  },
+  pt: {
+    badge: "Em breve",
+    title: "ZShop",
+    lead:
+      "Em breve você poderá descobrir criações únicas feitas por artistas do mundo todo.",
+    sub:
+      "Peças exclusivas que conectam com você — e apoiam diretamente seus criadores.",
+    support: "Apoiar",
+    back: "Voltar ao início",
+    aria: "ZShop — em breve",
+    bubblePhrases: [
+      "Olá! Obrigado pela visita ✨",
+      "Os artistas podem oferecer objetos personalizados aqui para seus fãs mais leais 💕",
+      "Bem-vindo à lojinha da arte! 💚",
+      "Eu não vendo fumaça… vendo magia embrulhada em caixas ✨",
+      "Cada clique aqui é um abraço ao criador que fez isso 🤗",
+      "Você e eu sabemos que isso ficaria perfeito com você 😉",
+      "ZShop não é loja… é um tesouro escondido 🗝️",
+      "Sem pressa, as coisas boas esperam ⏳",
+      "Volte sempre… vão ter surpresas 🛍️",
+      "A peça certa te encontra 💎",
+      "Coisas boas a caminho 🚚",
+    ],
+    burst: ["🛍️", "👕", "🎁", "🧸", "✨"],
+    bg: ["🛍️", "🎁", "🖼️", "🛍️", "✨"],
+  },
+  fr: {
+    badge: "Bientôt",
+    title: "ZShop",
+    lead:
+      "Bientôt, découvrez des créations uniques réalisées par des artistes du monde entier.",
+    sub:
+      "Des pièces exclusives qui résonnent avec vous — et soutiennent directement leurs créateur·rice·s.",
+    support: "Soutenir",
+    back: "Retour à l’accueil",
+    aria: "ZShop — bientôt",
+    bubblePhrases: [
+      "Salut ! Merci de passer ✨",
+      "Les artistes peuvent proposer ici des objets personnalisés à leurs fans les plus fidèles 💕",
+      "Bienvenue dans la petite boutique de l’art ! 💚",
+      "Je ne vends pas du vent… je vends de la magie emballée dans des boîtes ✨",
+      "Chaque clic ici est un câlin au créateur qui l’a fait 🤗",
+      "Toi et moi savons que ça t’irait parfaitement 😉",
+      "ZShop n’est pas une boutique… c’est un trésor caché 🗝️",
+      "Pas de précipitation, les bonnes choses savent attendre ⏳",
+      "Repasse quand tu veux… surprises à venir 🛍️",
+      "La bonne pièce te trouvera 💎",
+      "Le meilleur est en route 🚚",
+    ],
+    burst: ["🛍️", "🧢", "🎁", "📀", "✨"],
+    bg: ["🛍️", "🎁", "🧸", "🛍️", "✨"],
+  },
+  en: {
+    badge: "Coming soon",
+    title: "ZShop",
+    lead:
+      "Soon you’ll discover unique creations made by artists from all over the world.",
+    sub:
+      "Exclusive pieces that connect with you — and directly support their creators.",
+    support: "Support",
+    back: "Back to home",
+    aria: "ZShop — coming soon",
+    bubblePhrases: [
+      "Hey! Thanks for stopping by ✨",
+      "Artists can offer personalized items here for their most loyal fans 💕",
+      "Welcome to the little art shop! 💚",
+      "I don’t sell smoke… I sell magic wrapped in boxes ✨",
+      "Every click here is a hug to the creator who made it 🤗",
+      "You and I know this would look perfect on you 😉",
+      "ZShop isn’t a store… it’s a hidden treasure 🗝️",
+      "No rush, good things wait ⏳",
+      "Drop by anytime… surprises ahead 🛍️",
+      "The right piece will find you 💎",
+      "Good things are on the way 🚚",
+    ],
+    burst: ["🛍️", "👕", "🎁", "🧢", "✨"],
+    bg: ["🛍️", "🎁", "🧸", "🛍️", "✨"],
+  },
+} as const;
+/* ======================================================= */
 
 function ZShopInner() {
   const { lang } = useLang();
-  const t = {
-    es: {
-      badge: "Próximamente",
-      title: "ZShop",
-      lead:
-        "Muy pronto podrás descubrir creaciones únicas hechas por artistas de todo el mundo.",
-      sub: "Piezas exclusivas que conectan contigo — y apoyan directamente a sus creadores.",
-      support: "Apoyar",
-      back: "Volver al inicio",
-      aria: "ZShop — próximamente",
-      bubblePhrases: [
-        "¡Hola! Gracias por pasar ✨",
-        "Pasa cuando quieras… habrá sorpresas 🛍️",
-        "Quien espera, encuentra su pieza 💎",
-        "Lo bueno viene en camino 🚚",
-      ],
-      burst: ["🛍️", "🧾", "🎁", "💳", "✨"],
-      bg: ["🛍️", "🎁", "💳", "🛍️", "✨"],
-    },
-    pt: {
-      badge: "Em breve",
-      title: "ZShop",
-      lead:
-        "Em breve você poderá descobrir criações únicas feitas por artistas do mundo todo.",
-      sub: "Peças exclusivas que conectam com você — e apoiam diretamente seus criadores.",
-      support: "Apoiar",
-      back: "Voltar ao início",
-      aria: "ZShop — em breve",
-      bubblePhrases: [
-        "Olá! Obrigado pela visita ✨",
-        "Volte sempre… vão ter surpresas 🛍️",
-        "A peça certa te encontra 💎",
-        "Coisas boas a caminho 🚚",
-      ],
-      burst: ["🛍️", "🧾", "🎁", "💳", "✨"],
-      bg: ["🛍️", "🎁", "💳", "🛍️", "✨"],
-    },
-    fr: {
-      badge: "Bientôt",
-      title: "ZShop",
-      lead:
-        "Bientôt, découvrez des créations uniques réalisées par des artistes du monde entier.",
-      sub: "Des pièces exclusives qui résonnent avec vous — et soutiennent directement leurs créateur·rice·s.",
-      support: "Soutenir",
-      back: "Retour à l’accueil",
-      aria: "ZShop — bientôt",
-      bubblePhrases: [
-        "Salut ! Merci de passer ✨",
-        "Repasse quand tu veux… surprises à venir 🛍️",
-        "La bonne pièce te trouvera 💎",
-        "Le meilleur est en route 🚚",
-      ],
-      burst: ["🛍️", "🧾", "🎁", "💳", "✨"],
-      bg: ["🛍️", "🎁", "💳", "🛍️", "✨"],
-    },
-    en: {
-      badge: "Coming soon",
-      title: "ZShop",
-      lead:
-        "Soon you’ll discover unique creations made by artists from all over the world.",
-      sub: "Exclusive pieces that connect with you — and directly support their creators.",
-      support: "Support",
-      back: "Back to home",
-      aria: "ZShop — coming soon",
-      bubblePhrases: [
-        "Hey! Thanks for stopping by ✨",
-        "Drop by anytime… surprises ahead 🛍️",
-        "The right piece will find you 💎",
-        "Good things are on the way 🚚",
-      ],
-      burst: ["🛍️", "🧾", "🎁", "💳", "✨"],
-      bg: ["🛍️", "🎁", "💳", "🛍️", "✨"],
-    },
-  } as const;
 
   const L =
-    lang === "es" ? t.es : lang === "pt" ? t.pt : lang === "fr" ? t.fr : t.en;
+    lang === "es" ? TEXTS.es : lang === "pt" ? TEXTS.pt : lang === "fr" ? TEXTS.fr : TEXTS.en;
 
   // ----- Mensaje del globo rotando por visita (persistente) -----
-  const bubbleText = useMemo(() => {
-    const key = "z_bubble_idx_zshop";
-    const prev = Number(localStorage.getItem(key) || "0");
-    const idx = isNaN(prev) ? 0 : prev;
-    const txt = L.bubblePhrases[idx % L.bubblePhrases.length];
-    localStorage.setItem(key, String((idx + 1) % L.bubblePhrases.length));
-    return txt;
-  }, [L.bubblePhrases]);
+  const [bubbleText, setBubbleText] = useState<string>(L.bubblePhrases[0] || "");
+  const bubbleRef = useRef<HTMLDivElement>(null);
 
-  // refs
+  useEffect(() => {
+    // Protegemos SSR y navegadores con storage bloqueado
+    if (typeof window === "undefined") {
+      setBubbleText(L.bubblePhrases[0] || "");
+      return;
+    }
+    try {
+      const key = "z_bubble_idx_zshop";
+      const raw = window.localStorage.getItem(key);
+      const prev = raw ? parseInt(raw, 10) : 0;
+      const safePrev = Number.isFinite(prev) ? prev : 0;
+      const idx =
+        L.bubblePhrases.length > 0 ? safePrev % L.bubblePhrases.length : 0;
+      const txt = L.bubblePhrases[idx] || "";
+      const next =
+        L.bubblePhrases.length > 0 ? (idx + 1) % L.bubblePhrases.length : 0;
+      setBubbleText(txt);
+      window.localStorage.setItem(key, String(next));
+    } catch {
+      // Si falla localStorage, mostramos la primera
+      setBubbleText(L.bubblePhrases[0] || "");
+    }
+  }, [lang, L.bubblePhrases]);
+
+  // refs para efectos
   const iconRef = useRef<HTMLDivElement>(null);   // icono grande del cartel
   const layerRef = useRef<HTMLDivElement>(null);  // capa para chispas
-  const bubbleRef = useRef<HTMLDivElement>(null); // globo
 
   // ---- Tap burst (1 emoji por toque) ----
   useEffect(() => {
     const el = iconRef.current;
     const layer = layerRef.current || document.body;
     if (!el) return;
+
     const EMOJIS = L.burst;
     const burst = () => {
       const r = el.getBoundingClientRect();
       const s = document.createElement("span");
       s.className = "spark";
-      s.textContent = EMOJIS[Math.floor(Math.random() * EMOJIS.length)];
+      s.textContent =
+        EMOJIS[Math.floor(Math.random() * (EMOJIS.length || 1))] || "✨";
       const a = Math.random() * Math.PI * 2;
       const d = 26 + Math.random() * 18;
       s.style.left = `${r.left + r.width / 2}px`;
@@ -125,6 +186,8 @@ function ZShopInner() {
 
   // ---- Globo anclado al icono del header + wiggle del icono ----
   useEffect(() => {
+    if (typeof window === "undefined") return;
+
     const icon =
       (document.querySelector(
         'header a svg, header a img, header .site-logo svg, header .site-logo img, [data-logo-icon]'
@@ -146,36 +209,33 @@ function ZShopInner() {
       frame = requestAnimationFrame(() => {
         const r = icon.getBoundingClientRect();
 
-        // --- CENTRO del icono como objetivo de la flecha
+        // Centro del icono como objetivo de la flecha
         const targetX = r.left + r.width / 2;
 
-        // --- Pixeles donde está dibujada la flecha dentro del globo
-        const ARROW_LEFT_PX = 18; // debe corresponder con --arrow-left en CSS
+        // Debe corresponder con el CSS (--arrow-left)
+        const ARROW_LEFT_PX = 18;
 
-        // --- Corrimiento adicional hacia la izquierda (tu pedido)
-        const EXTRA_LEFT_SHIFT = 8; // "un poco más a la izquierda"
+        // Corrimiento leve a la izquierda (consistencia con otras páginas)
+        const EXTRA_LEFT_SHIFT = 8;
 
-        // --- Top pegado por debajo del header, nunca por encima
+        // Pegado por debajo del header
         const gapY = 10;
         let top = r.bottom + gapY;
         const minTop = navH + 6;
         if (top < minTop) top = minTop;
 
-        // --- Calculamos el left para que la flecha apunte al centro del icono
+        // Left calculado para apuntar al centro del icono
         const bubbleBox = bubble.getBoundingClientRect();
         const viewportW = window.innerWidth;
         let left = targetX - ARROW_LEFT_PX - EXTRA_LEFT_SHIFT;
 
-        // --- Evitamos desbordes laterales
+        // Evitar desbordes
         const minLeft = 8;
         const maxLeft = Math.max(minLeft, viewportW - bubbleBox.width - 8);
         if (left < minLeft) left = minLeft;
         if (left > maxLeft) left = maxLeft;
 
-        // --- Sincronizamos la var CSS de la flecha
         bubble.style.setProperty("--arrow-left", `${ARROW_LEFT_PX}px`);
-
-        // --- Asignamos posiciones
         bubble.style.top = `${top}px`;
         bubble.style.left = `${left}px`;
       });
@@ -187,7 +247,7 @@ function ZShopInner() {
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onResize);
 
-    // wiggle solo el icono cada vez que aparece el globo
+    // wiggle del icono cada vez que aparece el globo
     icon.classList.add("logo-solo-talk");
     const stop = setTimeout(() => icon.classList.remove("logo-solo-talk"), 2600);
 
@@ -211,23 +271,26 @@ function ZShopInner() {
 
       {/* fondo emojis (solo PC) */}
       <div className="ucard-bg-emoji" aria-hidden>
-        <span className="bg-emo e1">{L.bg[0]}</span>
-        <span className="bg-emo e2">{L.bg[1]}</span>
-        <span className="bg-emo e3">{L.bg[2]}</span>
-        <span className="bg-emo e4">{L.bg[3]}</span>
-        <span className="bg-emo e5">{L.bg[4]}</span>
+        <span className="bg-emo e1">{L.bg[0] ?? "🛍️"}</span>
+        <span className="bg-emo e2">{L.bg[1] ?? "🎁"}</span>
+        <span className="bg-emo e3">{L.bg[2] ?? "🖼️"}</span>
+        <span className="bg-emo e4">{L.bg[3] ?? "📀"}</span>
+        <span className="bg-emo e5">{L.bg[4] ?? "✨"}</span>
       </div>
 
       {/* wrapper centrado */}
       <section className="uc-wrap">
         <article className="settings-card ucard" role="status" aria-label={L.aria}>
           <div className="badge ucard-badge">{L.badge}</div>
+
           <div ref={iconRef} className="ucard-icon" aria-hidden>
             <span className="ucard-emoji">🛍️</span>
           </div>
+
           <h1 className="ucard-title">{L.title}</h1>
           <p className="ucard-lead">{L.lead}</p>
           <p className="ucard-sub">{L.sub}</p>
+
           <div className="ucard-ctas">
             <Link href="/thanks" className="btn-primary">{L.support}</Link>
             <Link href="/" className="btn-ghost">{L.back}</Link>
