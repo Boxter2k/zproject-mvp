@@ -1,7 +1,8 @@
+// src/app/zplaza/page.tsx
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { I18nProvider, useLang } from "../../lib/i18n-client";
 
 function ZPlazaInner() {
@@ -60,15 +61,42 @@ function ZPlazaInner() {
 
   const L = lang === "es" ? T.es : lang === "pt" ? T.pt : lang === "fr" ? T.fr : T.en;
 
-  // Globo rotando por visita (persistente)
-  const bubbleText = useMemo(() => {
-    const key = "z_bubble_idx_zplaza";
-    const prev = Number(localStorage.getItem(key) || "0");
-    const idx = isNaN(prev) ? 0 : prev;
-    const txt = L.bubbles[idx % L.bubbles.length];
-    localStorage.setItem(key, String((idx + 1) % L.bubbles.length));
-    return txt;
-  }, [L.bubbles]);
+  /* ===== Globo rotando por visita, seguro para SSR/Strict Mode ===== */
+  const [bubbleText, setBubbleText] = useState<string>("");
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    // Token de sesión por pestaña para evitar doble avance en Strict Mode
+    const sessKey = "__z_session_id";
+    // @ts-ignore
+    const session = (window[sessKey] ||= Math.random().toString(36).slice(2));
+
+    // Índice por idioma (para que no se mezclen)
+    const key = `z_bubble_idx_zplaza_${lang}`;
+    const guardKey = `${key}__last_session`;
+
+    try {
+      const prevRaw = window.localStorage.getItem(key);
+      const prev = prevRaw ? parseInt(prevRaw, 10) : 0;
+      const idx = Number.isFinite(prev) ? prev : 0;
+
+      // Mostrar texto del idioma actual
+      const text = L.bubbles.length ? L.bubbles[idx % L.bubbles.length] : "";
+      setBubbleText(text || "");
+
+      // Avanzar índice solo si esta sesión aún no lo avanzó
+      const lastSess = window.localStorage.getItem(guardKey);
+      if (lastSess !== session) {
+        const next = L.bubbles.length ? (idx + 1) % L.bubbles.length : 0;
+        window.localStorage.setItem(key, String(next));
+        window.localStorage.setItem(guardKey, session);
+      }
+    } catch {
+      // Fallback si falla localStorage
+      setBubbleText(L.bubbles[0] || "");
+    }
+  }, [lang, L.bubbles]);
 
   // refs
   const iconRef = useRef<HTMLDivElement>(null);   // icono grande de la tarjeta
@@ -192,7 +220,7 @@ function ZPlazaInner() {
         <article className="settings-card ucard" role="status" aria-label={L.aria}>
           <div className="badge ucard-badge">{L.badge}</div>
           <div ref={iconRef} className="ucard-icon" aria-hidden>
-            <span className="ucard-emoji">🧩</span>
+            <span className="ucard-emoji">🏛️</span>
           </div>
           <h1 className="ucard-title">{L.title}</h1>
           <p className="ucard-lead">{L.lead}</p>
@@ -281,7 +309,7 @@ function ZPlazaInner() {
           .uc-wrap{ padding-inline:12px; }
           .ucard{ width:100%; max-width:520px; padding:16px 16px; gap:12px; }
           .ucard-title{ font-size: clamp(20px,6.2vw,28px); }
-          .ucard-lead { font-size: clamp(14px,4.2vw,17px); }
+          .ucard-lead { font size: clamp(14px,4.2vw,17px); }
           .ucard-sub  { font-size: clamp(13px,3.9vw,16px); }
           .ucard-ctas { gap:10px; }
           .ucard-bg-emoji{ display:none; }
