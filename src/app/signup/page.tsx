@@ -1,10 +1,48 @@
 // src/app/signup/page.tsx
-
 "use client";
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { I18nProvider, useLang } from "../../lib/i18n-client";
+
+/* =========================================================
+   ZONA DE CONFIGURACIÓN (editas aquí)
+   - Agrega, quita o reordena frases por idioma.
+   - Se mostrarán en orden secuencial (rotan 1 a 1 en cada visita).
+   - Si un idioma no tiene lista, usaremos "en".
+   ========================================================= */
+const BUBBLE_MESSAGES = {
+  es: [ 
+    "Ups... eso no me lo esperaba...",
+    "Si tocas algunos iconos sueltan emojis 😗",
+    "Gracias por pasar ✨",
+    "Obras en curso 👷‍♂️",
+    "Pronto habrá novedades 🛠️",
+    // Añade o borra líneas libremente ⤴
+  ],
+  pt: [
+    "Ops... eu não esperava por isso...",
+    "Se você tocar em alguns ícones, eles soltam emojis",
+    "Valeu a visita ✨",
+    "Obras em andamento 🚧",
+    "Novidades em breve 🛠️",
+  ],
+  fr: [
+    "Oups... je ne m'y attendais pas...",
+    "Si tu touches certains icônes, ils affichent des émojis",
+    "Merci de la visite ✨",
+    "Chantier en cours 🚧",
+    "Des nouvelles arrivent 🛠️",
+  ],
+  en: [
+    "Oops... I didn’t see that coming...",
+    "If you tap some icons, they release emojis",
+    "Thanks for stopping by ✨",
+    "Work in progress 🚧",
+    "Updates coming soon 🛠️",
+  ],
+} as const;
+/* ======================================================= */
 
 function SignupInner() {
   const { lang } = useLang();
@@ -66,39 +104,41 @@ function SignupInner() {
     lang === "fr" ? i18n.fr :
     i18n.en;
 
-  // ==== Globo de diálogo (frases por idioma) ====
-  const bubblePhrases =
-    lang === "es"
-      ? ["Gracias por pasar ✨", "Obras en curso 🚧", "Pronto habrá novedades 🛠️"]
-      : lang === "pt"
-      ? ["Valeu a visita ✨", "Obras em andamento 🚧", "Novidades em breve 🛠️"]
-      : lang === "fr"
-      ? ["Merci de la visite ✨", "Chantier en cours 🚧", "Des nouvelles arrivent 🛠️"]
-      : ["Thanks for stopping by ✨", "Work in progress 🚧", "Updates coming soon 🛠️"];
-
-  const [bubbleText, setBubbleText] = useState<string>(bubblePhrases[0]);
+  // ====== Globo de diálogo (rotación 1 a 1 por visita/retorno) ======
   const bubbleRef = useRef<HTMLDivElement>(null);
 
-  // Seguro en cliente: rotación con localStorage y colocación + wiggle del icono del header
-  useEffect(() => {
-    // 1) Rotación de frases
-    setBubbleText(bubblePhrases[0]);
-    try {
-      const key = "z_bubble_idx_signup";
-      const prev = Number(
-        (typeof window !== "undefined" ? window.localStorage?.getItem(key) : "0") || "0"
-      );
-      const idx = isNaN(prev) ? 0 : prev;
-      const txt = bubblePhrases[idx % bubblePhrases.length];
-      setBubbleText(txt);
-      if (typeof window !== "undefined") {
-        window.localStorage?.setItem(key, String((idx + 1) % bubblePhrases.length));
-      }
-    } catch {
-      // fallback silencioso
-    }
+  // Elegimos la lista según idioma (fallback a EN si está vacía)
+  const messages =
+    (BUBBLE_MESSAGES as any)[lang] && (BUBBLE_MESSAGES as any)[lang].length
+      ? (BUBBLE_MESSAGES as any)[lang] as string[]
+      : (BUBBLE_MESSAGES as any).en as string[];
 
-    // 2) Colocar el globo apuntando al icono del header + wiggle
+  const LOCAL_KEY = "z_bubble_idx_signup";
+
+  // Lee el índice previo, decide el texto, y guarda el siguiente
+  function getNextBubbleText(): string {
+    try {
+      const raw = window.localStorage.getItem(LOCAL_KEY);
+      const prev = raw ? parseInt(raw, 10) : 0;
+      const safePrev = Number.isFinite(prev) ? prev : 0;
+      const idx = messages.length > 0 ? safePrev % messages.length : 0;
+      const text = messages[idx] || "";
+      const next = messages.length > 0 ? (idx + 1) % messages.length : 0;
+      window.localStorage.setItem(LOCAL_KEY, String(next));
+      return text;
+    } catch {
+      // Si localStorage falla, devolvemos la primera
+      return messages[0] || "";
+    }
+  }
+
+  const [bubbleText, setBubbleText] = useState<string>(() => messages[0] || "");
+
+  // Al montar o cambiar idioma: elegir siguiente y colocar el globo
+  useEffect(() => {
+    setBubbleText(getNextBubbleText());
+
+    // Colocación + wiggle atado al icono del header
     const icon =
       (document.querySelector(
         'header a svg, header a img, header .site-logo svg, header .site-logo img, [data-logo-icon]'
@@ -114,33 +154,21 @@ function SignupInner() {
     const navH = nav?.getBoundingClientRect().height ?? 56;
 
     let frame = 0;
-
     const place = () => {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
         const r = icon.getBoundingClientRect();
-
-        // Centro del icono como objetivo de la flecha
         const targetX = r.left + r.width / 2;
-
-        // Debe corresponder con el CSS (--arrow-left)
         const ARROW_LEFT_PX = 18;
-
-        // Corrimiento leve a la izquierda (igual que en otras páginas)
         const EXTRA_LEFT_SHIFT = 8;
-
-        // Pegado por debajo del header
         const gapY = 10;
         let top = r.bottom + gapY;
         const minTop = navH + 6;
         if (top < minTop) top = minTop;
 
-        // Left para que la flecha apunte al centro del icono
         const bubbleBox = bubble.getBoundingClientRect();
         const viewportW = window.innerWidth;
         let left = targetX - ARROW_LEFT_PX - EXTRA_LEFT_SHIFT;
-
-        // Evitar desbordes
         const minLeft = 8;
         const maxLeft = Math.max(minLeft, viewportW - bubbleBox.width - 8);
         if (left < minLeft) left = minLeft;
@@ -158,7 +186,6 @@ function SignupInner() {
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onResize);
 
-    // Wiggle del icono del header cuando aparece el globo
     icon.classList.add("logo-solo-talk");
     const stop = setTimeout(() => icon.classList.remove("logo-solo-talk"), 2600);
 
@@ -168,9 +195,9 @@ function SignupInner() {
       cancelAnimationFrame(frame);
       clearTimeout(stop);
     };
-  }, [lang]); // re-colocar y re-rotar al cambiar idioma
+  }, [lang]); // cambia al cambiar idioma
 
-  // Capa para pops del emoji central
+  // Pops del emoji central (sin cambios)
   const popLayerRef = useRef<HTMLDivElement>(null);
   const iconRef = useRef<HTMLDivElement>(null);
 
@@ -179,22 +206,20 @@ function SignupInner() {
     const layer = popLayerRef.current || document.body;
     if (!el) return;
 
-    const EMOJIS = ["🔨", "🛠️", "🧱", "⚠️", "🔧", "⛓️", "🏗️", "⛏️", "🚧"];
+    const EMOJIS = ["🔨", "🛠️", "🧱", "⚠️", "🔧", "⛓️", "🏗️", "⛏️", "🚧", "⏰", "🐌"];
 
-    function spawnOne(e: MouseEvent | TouchEvent) {
+    function spawnOne() {
       const rect = el.getBoundingClientRect();
       const cx = rect.left + rect.width / 2;
       const cy = rect.top + rect.height / 2;
 
-      // 1 emoji aleatorio
       const s = document.createElement("span");
       s.className = "uc-pop";
       s.textContent = EMOJIS[Math.floor(Math.random() * EMOJIS.length)];
       s.style.left = `${cx}px`;
       s.style.top = `${cy}px`;
 
-      // Dirección aleatoria hacia arriba
-      const ang = (Math.random() * Math.PI) - Math.PI / 2; // entre -90° y +90°
+      const ang = (Math.random() * Math.PI) - Math.PI / 2;
       const dist = 40 + Math.random() * 60;
       const dx = Math.cos(ang) * dist;
       const dy = -Math.abs(Math.sin(ang) * dist) - (20 + Math.random() * 20);
@@ -216,7 +241,7 @@ function SignupInner() {
   }, []);
 
   return (
-    <main className="relative min-h-[72vh] flex items-center justify-center text-center overflow-hidden">
+    <main className="uc-page relative min-h-[72vh] flex items-center justify-center text-center overflow-hidden">
       {/* Globo de diálogo pegado al icono del header */}
       <div ref={bubbleRef} className="talk-bubble" role="status" aria-live="polite">
         {bubbleText}
@@ -225,7 +250,7 @@ function SignupInner() {
       {/* Capa de pops */}
       <div ref={popLayerRef} className="uc-pop-layer" aria-hidden />
 
-      {/* ===== Fondo de emojis en movimiento ===== */}
+      {/* Fondo de emojis */}
       <div className="uc-bg" aria-hidden>
         <span className="uc-emo e1">🚧</span>
         <span className="uc-emo e2">👷‍♂️</span>
@@ -263,6 +288,10 @@ function SignupInner() {
       </section>
 
       <style>{`
+        /* ===== Evitar desplazamiento lateral SOLO en esta página ===== */
+        .uc-page, .uc-page * { box-sizing: border-box; }
+        .uc-page { overflow-x: hidden; }
+
         /* ===== Globo cómic pegado al icono del header ===== */
         .talk-bubble{
           position: fixed;
@@ -295,7 +324,7 @@ function SignupInner() {
         @keyframes bubble-in{ from{ transform: translateY(-6px); opacity:0 } to{ transform:none; opacity:1 } }
         @keyframes bubble-pulse{ 0%,100%{ transform: translateY(0) } 50%{ transform: translateY(-1px) } }
 
-        /* Wiggle SOLO del iconito del header */
+        /* Wiggle del icono del header */
         .logo-solo-talk{ animation: wiggle .6s ease-in-out 3; transform-origin: 50% 50%; }
         @keyframes wiggle{
           0%,100%{ transform: rotate(0) }
@@ -310,12 +339,13 @@ function SignupInner() {
           display: grid;
           place-items: center;
           width: 100%;
+          padding-left: max(16px, env(safe-area-inset-left));
+          padding-right: max(16px, env(safe-area-inset-right));
         }
 
         /* ===== Card ===== */
         .uc-card{
-          max-width: 820px;
-          width: 100%;
+          width: min(100%, 820px);
           margin-inline: auto;
           padding: clamp(18px, 4vw, 34px);
           display: grid;
@@ -323,8 +353,17 @@ function SignupInner() {
           justify-items: center;
           text-align: center;
         }
+
+        /* ===== Badge (anti overflow en “sitio para computadora” móvil) ===== */
         .uc-badge{
-          font-weight: 600; letter-spacing: .2px;
+          font-weight: 600;
+          letter-spacing: .2px;
+          display: inline-block;
+          max-width: 100%;
+          white-space: normal;
+          overflow-wrap: anywhere;
+          line-height: 1.1;
+          padding: .4rem .6rem;
         }
 
         /* ===== Icono (emoji) ===== */
@@ -360,7 +399,7 @@ function SignupInner() {
           opacity: .85; max-width: 66ch;
         }
 
-        /* ===== CTAs (centradas) ===== */
+        /* ===== CTAs ===== */
         .uc-ctas{
           display: flex;
           gap: 12px;
@@ -373,6 +412,15 @@ function SignupInner() {
         .uc-btn{
           text-align: center;
           min-width: 220px;
+          /* anti overflow en “sitio para computadora” móvil */
+          white-space: normal;
+          overflow-wrap: anywhere;
+          line-height: 1.15;
+        }
+        /* defensivo para los estilos globales de botones */
+        .btn-primary, .btn-ghost{
+          white-space: normal;
+          overflow-wrap: anywhere;
         }
 
         /* ===== Efecto latido ===== */
@@ -387,9 +435,7 @@ function SignupInner() {
         }
 
         /* ===== Pops (click en emoji central) ===== */
-        .uc-pop-layer{
-          position: fixed; inset: 0; pointer-events: none; z-index: 6;
-        }
+        .uc-pop-layer{ position: fixed; inset: 0; pointer-events: none; z-index: 6; }
         .uc-pop{
           position: fixed;
           left: 0; top: 0;
@@ -409,7 +455,7 @@ function SignupInner() {
         .uc-bg{
           position: fixed;
           inset: -8%;
-          z-index: 1;                 /* por encima del bg global, debajo del contenido */
+          z-index: 1;
           pointer-events: none;
           opacity: .20;
           filter: blur(0.5px);
