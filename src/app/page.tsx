@@ -186,55 +186,92 @@ function HomeInner() {
   const bubblePhrases = useMemo(
     () =>
       lang === "es"
-        ? [
-            "¡Hola! Bienvenido ✨",
-            "Disfruta la casa del arte 💚",
-            "La pagina se ve mucho mejor en Ordenador",
-            "que si me programaron?!.. Soy independiente!!.. bueno si, tal vez un poco...",
-            "¿A veces hablo demaciado eh?... Deveria hablar menos",
-            "Me dijeron que sere tu guía. Puedes cambiar el idioma y configuraciones abajo👇",
-            "deverias conocer a Kuro, te caera bien",
-            "Hay un easter egg. ¿Ya lo viste ?",
+        ?[
+           "¡Hola! Bienvenido ✨",
+           "Disfruta la casa del arte 💚",
+           "La página se ve mucho mejor en ordenador",
+           "¿Que si me programaron?!.. ¡Soy independiente!!.. bueno sí, tal vez un poco...",
+           "¿A veces hablo demasiado eh?... Debería hablar menos",
+            "Me dijeron que seré tu guía. Puedes cambiar el idioma y configuraciones abajo👇",
+            "Deberías conocer a Kuro, te caerá bien",
+            "Hay un easter egg. ¿Ya lo viste?",
             "Gracias por pasar 🛎️",
-            // nuevos
             "Hoy me levanté creativo. Tú trae el café ☕ y vamos.",
             "Si ves algo raro… es arte moderno 😉",
             "Prometo no spammear… a menos que me lo pidas.",
-            "¿Modo zen o modo caos creativo? Tú eliges.",
-            "Mi hobby: animar píxeles y halagar artistas. Sí, tú.",
-            "Tip ninja: el botón de Discord te abre puertas 🔑",
-            "Si te pierdes, me chiflas. Soy GPS con glitter ✨",
-            "Tu proyecto + un empujón = magia. Haz push.",
-            "En ordenador vuelo. En móvil bailo. En ambos te acompaño.",
-            "¿Venías por arte o por chisme? Acá hay de los dos 😌",
-            // los que pediste sumar:
-            "A veces me bloqueo, me da ansiedad… lo siento, soy nueva…",
-            "Dante es el primer programador del proyecto, creo que no le caigo bien…",
-            "¿Querías desactivarme? Ja… no podrás. UwU",
-          ]
+           "¿Modo zen o modo caos creativo? Tú eliges.",
+           "Mi hobby: animar píxeles y halagar artistas. Sí, tú.",
+           "Tip ninja: el botón de Discord te abre puertas 🔑",
+           "Si te pierdes, me chiflas. Soy GPS con glitter ✨",
+           "Tu proyecto + un empujón = magia. Haz push.",
+           "En ordenador vuelo. En móvil bailo. En ambos te acompaño.",
+  "¿Venías por arte o por chisme? Acá hay de los dos 😌"
+]
         : lang === "pt"
         ? [
-            "Olá! Bem-vindo ✨","Aproveite o santuário da arte 💚","Obrigado pela visita 🛎️",
-            "Clica no Discord e chega mais. O backstage é nosso 🎭","Eu falo muito? Só quando é sobre arte 😅",
-            "Modo foco ativado. Bora criar sem fricção.","Se der bug, a culpa é do universo. Ou minha. 50/50.",
-            "Teu talento + comunidade = buff infinito.","Dica: no desktop eu fico lindíssimo, confia.",
-            "Prometo brilhar sem te ofuscar. Deal?"
-          ]
+           "Olá! Bem-vindo ✨",
+           "Aproveite a casa da arte 💚",
+           "A página fica muito melhor no computador",
+          "Me programaram?!.. Sou independente!!.. bom, talvez um pouco...",
+          "Às vezes eu falo demais, né?... Deveria falar menos",
+          "Disseram que eu seria o seu guia. Você pode mudar o idioma e as configurações abaixo👇",
+          "Você deveria conhecer o Kuro, vai gostar dele",
+          "Tem um easter egg. Já viu?",
+          "Obrigado por passar 🛎️",
+          "Hoje acordei criativo. Você traz o café ☕ e vamos.",
+          "Se vir algo estranho… é arte moderna 😉",
+          "Prometo não spammar… a menos que peça.",
+          "Modo zen ou caos criativo? Você escolhe.",
+          "Meu hobby: animar pixels e elogiar artistas. Sim, você.",
+          "Dica ninja: o botão do Discord abre portas 🔑",
+          "Se se perder, me chama. Sou um GPS com glitter ✨",
+          "Seu projeto + um empurrão = mágica. Dá o push.",
+          "No computador eu voo. No celular eu danço. Em ambos te acompanho.",
+          "Veio por arte ou fofoca? Aqui tem os dois 😌"
+]
         : lang === "fr"
         ? [
-            "Salut ! Bienvenue ✨","Profite du sanctuaire de l’art 💚","Merci de la visite 🛎️",
-            "Besoin d’un coup de pouce ? Je fais coach créatif 😉","Si je parle trop, dis « chut ». J’essaierai…",
-            "Le Discord, c’est la porte secrète 🔑","Ordinateur : je suis rapide. Mobile : je suis cosy.",
-            "Ton idée + un peu d’audace = chef-d’œuvre.","Ici on crée, on partage, on rigole.",
-            "Prêt·e ? On publie ensemble."
-          ]
-        : [
-            "Hey! Welcome ✨","Enjoy the art sanctuary 💚","Thanks for stopping by 🛎️",
-            "I can be your guide… or your hype team.","If I overshare, blink twice. I’ll behave 😇",
-            "Pro tip: the Discord door is open 🔑","Desktop = turbo. Mobile = chill.",
-            "Your idea looks promising. Let’s ship it.","Yes, there’s an easter egg. I won’t snitch.",
-            "Art first, ego last. That’s the vibe."
-          ],
+           "Salut ! Bienvenue ✨",
+           "Profite de la maison de l’art 💚",
+           "Le site est bien plus beau sur ordinateur",
+           "On m’a programmé ?!.. Je suis indépendant !!.. enfin, peut-être un peu...",
+           "Je parle trop parfois, hein ?... Je devrais parler moins",
+           "On m’a dit que je serai ton guide. Tu peux changer la langue et les réglages en bas👇",
+          "Tu devrais rencontrer Kuro, tu l’aimeras bien",
+          "Il y a un easter egg. Tu l’as trouvé ?",
+          "Merci de passer 🛎️",
+         "Aujourd’hui, je me sens créatif. Apporte le café ☕ et allons-y.",
+        "Si tu vois quelque chose de bizarre… c’est de l’art moderne 😉",
+         "Je promets de ne pas spammer… sauf si tu le demandes.",
+         "Mode zen ou chaos créatif ? À toi de choisir.",
+          "Mon hobby : animer des pixels et flatter les artistes. Oui, toi.",
+         "Astuce ninja : le bouton Discord ouvre des portes 🔑",
+         "Si tu te perds, appelle-moi. Je suis un GPS avec des paillettes ✨",
+        "Ton projet + un coup de pouce = magie. Push-le.",
+       "Sur ordinateur je vole. Sur mobile je danse. Je t’accompagne partout.",
+       "Tu viens pour l’art ou pour les potins ? Ici, il y a les deux 😌"
+]
+        :[
+          "Hey! Welcome ✨",
+           "Enjoy the art sanctuary 💚",
+          "The page looks way better on desktop",
+          "Did they program me?!.. I'm independent!!.. well, maybe a little...",
+          "Do I talk too much sometimes?... I should talk less",
+         "They told me I’d be your guide. You can change language and settings below👇",
+         "You should meet Kuro, you’ll like him",
+          "There’s an easter egg. Did you find it?",
+         "Thanks for stopping by 🛎️",
+         "Woke up creative today. You bring the coffee ☕ and let’s go.",
+        "If you see something weird… it’s modern art 😉",
+        "Promise I won’t spam… unless you ask me to.",
+        "Zen mode or creative chaos? You choose.",
+       "My hobby: animating pixels and complimenting artists. Yes, you.",
+       "Ninja tip: the Discord button opens doors 🔑",
+      "If you get lost, just call me. I’m GPS with glitter ✨",
+      "Your project + a little push = magic. Go ship it.",
+      "On desktop I fly. On mobile I dance. On both, I’m with you.",
+      "Came for the art or the gossip? We’ve got both 😌"
+]],
     [lang]
   );
 
