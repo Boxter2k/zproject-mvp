@@ -1,7 +1,8 @@
+// src/app/ztv/page.tsx
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { I18nProvider, useLang } from "../../lib/i18n-client";
 
 function ZTVInner() {
@@ -16,7 +17,15 @@ function ZTVInner() {
       support: "Apoyar",
       back: "Volver al inicio",
       aria: "ZTV — próximamente",
-      bubbles: ["Luces, cámara… paciencia 🎬", "Preparando algo especial 📺", "Gracias por pasar por ZTV ✨"],
+      bubbles: [
+        "Luces, cámara… paciencia 👀",
+        "¿Te gustan las palomitas? ¡A mí también! 🍿",
+        "Preparando algo especial 📺",
+        "Dicen que la tele está muerta… pero aquí respira creatividad 💚",
+        "Prepárate, tu imaginación es la estrella principal ⭐",
+        "ZTV: donde los artistas son las verdaderas celebridades 🎤🎨",
+        "Gracias por pasar por ZTV ✨",
+      ],
       burst: ["📺", "🎬", "🎞️", "⭐", "✨"],
       bg: ["📺", "🎬", "🎞️", "📺", "✨"],
     },
@@ -28,7 +37,15 @@ function ZTVInner() {
       support: "Apoiar",
       back: "Voltar ao início",
       aria: "ZTV — em breve",
-      bubbles: ["Luzes, câmera… paciência 🎬", "Preparando algo especial 📺", "Obrigado por passar ✨"],
+      bubbles: [
+        "Luzes, câmera… paciência 👀",
+        "Gosta de pipoca? Eu também 🍿",
+        "Dizem que a TV está morta… mas aqui respira criatividade 💚",
+        "ZTV: onde os artistas são as verdadeiras celebridades 🎤🎨",
+        "Prepare-se, sua imaginação é a estrela principal ⭐",
+        "Preparando algo especial 📺",
+        "Obrigado por passar ✨",
+      ],
       burst: ["📺", "🎬", "🎞️", "⭐", "✨"],
       bg: ["📺", "🎬", "🎞️", "📺", "✨"],
     },
@@ -40,7 +57,15 @@ function ZTVInner() {
       support: "Soutenir",
       back: "Retour à l’accueil",
       aria: "ZTV — bientôt",
-      bubbles: ["Lumières, caméra… patience 🎬", "On prépare quelque chose 📺", "Merci de ta visite ✨"],
+      bubbles: [
+        "Lumières, caméra… patience 👀",
+        "Tu aimes le pop-corn ? Moi aussi 🍿",
+        "On prépare quelque chose 📺",
+        "Prépare-toi, ton imagination est la vedette principale ⭐",
+        "ZTV : là où les artistes sont les vraies célébrités 🎤🎨",
+        "On dit que la télé est morte… mais ici elle respire la créativité 💚",
+        "Merci de ta visite ✨",
+      ],
       burst: ["📺", "🎬", "🎞️", "⭐", "✨"],
       bg: ["📺", "🎬", "🎞️", "📺", "✨"],
     },
@@ -52,7 +77,15 @@ function ZTVInner() {
       support: "Support",
       back: "Back to home",
       aria: "ZTV — coming soon",
-      bubbles: ["Lights, camera… patience 🎬", "Cooking up something 📺", "Thanks for dropping by ✨"],
+      bubbles: [
+        "Lights, camera… patience 👀",
+        "Do you like popcorn? Me too 🍿",
+        "They say TV is dead… but here it breathes creativity 💚",
+        "Cooking up something 📺",
+        "ZTV: where artists are the true celebrities 🎤🎨",
+        "Get ready, your imagination is the main star ⭐",
+        "Thanks for dropping by ✨",
+      ],
       burst: ["📺", "🎬", "🎞️", "⭐", "✨"],
       bg: ["📺", "🎬", "🎞️", "📺", "✨"],
     },
@@ -60,26 +93,58 @@ function ZTVInner() {
 
   const L = lang === "es" ? T.es : lang === "pt" ? T.pt : lang === "fr" ? T.fr : T.en;
 
-  // Globo rotando por visita (persistente)
-  const bubbleText = useMemo(() => {
-    const key = "z_bubble_idx_ztv";
-    const prev = Number(localStorage.getItem(key) || "0");
-    const idx = isNaN(prev) ? 0 : prev;
-    const txt = L.bubbles[idx % L.bubbles.length];
-    localStorage.setItem(key, String((idx + 1) % L.bubbles.length));
-    return txt;
-  }, [L.bubbles]);
+  /* ========= Globo: rota 1 a 1 por visita, sincronizado con idioma =========
+     - Lee el índice guardado por idioma
+     - Muestra el texto correspondiente al idioma actual
+     - Avanza el índice SOLO una vez por sesión (evita doble efecto en Strict Mode)
+  */
+  const [bubbleText, setBubbleText] = useState<string>("");
+
+  useEffect(() => {
+    // no correr en SSR
+    if (typeof window === "undefined") return;
+
+    // sesión única por pestaña: evita doble avance en Strict Mode
+    const sessKey = "__z_session_id";
+    // @ts-ignore
+    const session = (window[sessKey] ||= Math.random().toString(36).slice(2));
+
+    const key = `z_bubble_idx_ztv_${lang}`;        // índice por IDIOMA
+    const guardKey = `${key}__last_session`;       // quién avanzó por última vez
+
+    try {
+      const prevRaw = window.localStorage.getItem(key);
+      const prev = prevRaw ? parseInt(prevRaw, 10) : 0;
+      const idx = Number.isFinite(prev) ? prev : 0;
+
+      // Mostrar texto del idioma actual
+      const text = L.bubbles.length ? L.bubbles[idx % L.bubbles.length] : "";
+      setBubbleText(text || "");
+
+      // Avanzar el índice solo si no avanzó ya esta misma sesión
+      const lastSess = window.localStorage.getItem(guardKey);
+      if (lastSess !== session) {
+        const next = L.bubbles.length ? (idx + 1) % L.bubbles.length : 0;
+        window.localStorage.setItem(key, String(next));
+        window.localStorage.setItem(guardKey, session);
+      }
+    } catch {
+      // Si localStorage falla, al menos mostramos el primero
+      setBubbleText(L.bubbles[0] || "");
+    }
+  }, [lang, L.bubbles]);
 
   // refs
-  const iconRef = useRef<HTMLDivElement>(null);   // icono grande de la tarjeta
-  const layerRef = useRef<HTMLDivElement>(null);  // capa chispas
-  const bubbleRef = useRef<HTMLDivElement>(null); // globo
+  const iconRef = useRef<HTMLDivElement>(null);
+  const layerRef = useRef<HTMLDivElement>(null);
+  const bubbleRef = useRef<HTMLDivElement>(null);
 
-  // Chispas al tocar el ícono de la tarjeta
+  /* ===== Chispas al tocar el ícono ===== */
   useEffect(() => {
     const el = iconRef.current;
     const layer = layerRef.current || document.body;
     if (!el) return;
+
     const burst = () => {
       const r = el.getBoundingClientRect();
       const s = document.createElement("span");
@@ -95,11 +160,12 @@ function ZTVInner() {
       (layer as HTMLElement).appendChild(s);
       setTimeout(() => s.remove(), 900);
     };
+
     el.addEventListener("click", burst);
     return () => el.removeEventListener("click", burst);
   }, [L.burst]);
 
-  // Globo anclado al icono del header + wiggle
+  /* ===== Globo anclado al icono del header + wiggle ===== */
   useEffect(() => {
     const icon =
       (document.querySelector(
@@ -262,7 +328,7 @@ function ZTVInner() {
         .bg-emo.e1{ left:10%; top:20%; animation-duration:24s; }
         .bg-emo.e2{ left:65%; top:18%; animation-duration:26s; }
         .bg-emo.e3{ left:30%; top:65%; animation-duration:22s; }
-        .bg-emo.e4{ left:78%; top:62%; animation-duration:20%; }
+        .bg-emo.e4{ left:78%; top:62%; animation-duration:20s; }
         .bg-emo.e5{ left:6%;  top:78%; animation-duration:23s; }
         @keyframes drift{ 0%{ transform:translate(0,0) scale(.98) rotate(.5deg); opacity:.13;} 50%{ transform:translate(2vw,-2vh) scale(1.02) rotate(-1deg); opacity:.16;} 100%{transform:translate(-1.2vw,2vh) scale(1) rotate(1deg); opacity:.14;} }
 
