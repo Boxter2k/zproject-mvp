@@ -2,23 +2,22 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { I18nProvider, useLang } from "../../lib/i18n-client";
 
 /* =========================================================
-   ZONA DE CONFIGURACIÓN (editas aquí)
-   - Agrega, quita o reordena frases por idioma.
-   - Se mostrarán en orden secuencial (rotan 1 a 1 en cada visita).
-   - Si un idioma no tiene lista, usaremos "en".
+   Configuración de frases del globo por idioma
    ========================================================= */
-const BUBBLE_MESSAGES = {
-  es: [ 
+
+type Lang = "es" | "pt" | "fr" | "en";
+
+const BUBBLE_MESSAGES: Record<Lang, readonly string[]> = {
+  es: [
     "Ups... eso no me lo esperaba...",
     "Si tocas algunos iconos sueltan emojis 😗",
     "Gracias por pasar ✨",
     "Obras en curso 👷‍♂️",
     "Pronto habrá novedades 🛠️",
-    // Añade o borra líneas libremente ⤴
   ],
   pt: [
     "Ops... eu não esperava por isso...",
@@ -41,13 +40,34 @@ const BUBBLE_MESSAGES = {
     "Work in progress 🚧",
     "Updates coming soon 🛠️",
   ],
-} as const;
-/* ======================================================= */
+};
+
+/* Util para normalizar lang externo a nuestra union */
+function normalizeLang(raw: string): Lang {
+  const v = (raw || "en").toLowerCase();
+  if (v.startsWith("es")) return "es";
+  if (v.startsWith("pt")) return "pt";
+  if (v.startsWith("fr")) return "fr";
+  return "en";
+}
 
 function SignupInner() {
   const { lang } = useLang();
+  const langKey = normalizeLang(lang);
 
-  const i18n = {
+  const i18n: Record<
+    Lang,
+    {
+      title: string;
+      lead: string;
+      sub: string;
+      support: string;
+      back: string;
+      more: string;
+      badge: string;
+      aria: string;
+    }
+  > = {
     es: {
       title: "Aún en construcción",
       lead:
@@ -96,27 +116,19 @@ function SignupInner() {
       badge: "Coming soon",
       aria: "Page under construction",
     },
-  } as const;
+  };
 
-  const t =
-    lang === "es" ? i18n.es :
-    lang === "pt" ? i18n.pt :
-    lang === "fr" ? i18n.fr :
-    i18n.en;
+  const t = i18n[langKey];
 
   // ====== Globo de diálogo (rotación 1 a 1 por visita/retorno) ======
   const bubbleRef = useRef<HTMLDivElement>(null);
 
-  // Elegimos la lista según idioma (fallback a EN si está vacía)
-  const messages =
-    (BUBBLE_MESSAGES as any)[lang] && (BUBBLE_MESSAGES as any)[lang].length
-      ? (BUBBLE_MESSAGES as any)[lang] as string[]
-      : (BUBBLE_MESSAGES as any).en as string[];
-
+  // Elegimos la lista según idioma (fallback garantizado por el tipo)
+  const messages = BUBBLE_MESSAGES[langKey] ?? BUBBLE_MESSAGES.en;
   const LOCAL_KEY = "z_bubble_idx_signup";
 
-  // Lee el índice previo, decide el texto, y guarda el siguiente
-  function getNextBubbleText(): string {
+  // Calcula el siguiente texto (memoizado para contentar el linter)
+  const getNextBubbleText = useCallback((): string => {
     try {
       const raw = window.localStorage.getItem(LOCAL_KEY);
       const prev = raw ? parseInt(raw, 10) : 0;
@@ -130,7 +142,7 @@ function SignupInner() {
       // Si localStorage falla, devolvemos la primera
       return messages[0] || "";
     }
-  }
+  }, [messages]);
 
   const [bubbleText, setBubbleText] = useState<string>(() => messages[0] || "");
 
@@ -141,7 +153,7 @@ function SignupInner() {
     // Colocación + wiggle atado al icono del header
     const icon =
       (document.querySelector(
-        'header a svg, header a img, header .site-logo svg, header .site-logo img, [data-logo-icon]'
+        "header a svg, header a img, header .site-logo svg, header .site-logo img, [data-logo-icon]"
       ) as HTMLElement) || null;
 
     const bubble = bubbleRef.current;
@@ -195,9 +207,9 @@ function SignupInner() {
       cancelAnimationFrame(frame);
       clearTimeout(stop);
     };
-  }, [lang]); // cambia al cambiar idioma
+  }, [getNextBubbleText, langKey]);
 
-  // Pops del emoji central (sin cambios)
+  // Pops del emoji central (sin cambios de comportamiento)
   const popLayerRef = useRef<HTMLDivElement>(null);
   const iconRef = useRef<HTMLDivElement>(null);
 
@@ -206,7 +218,7 @@ function SignupInner() {
     const layer = popLayerRef.current || document.body;
     if (!el) return;
 
-    const EMOJIS = ["🔨", "🛠️", "🧱", "⚠️", "🔧", "⛓️", "🏗️", "⛏️", "🚧", "⏰", "🐌"];
+    const EMOJIS: readonly string[] = ["🔨", "🛠️", "🧱", "⚠️", "🔧", "⛓️", "🏗️", "⛏️", "🚧", "⏰", "🐌"];
 
     function spawnOne() {
       const rect = el.getBoundingClientRect();
@@ -219,13 +231,16 @@ function SignupInner() {
       s.style.left = `${cx}px`;
       s.style.top = `${cy}px`;
 
-      const ang = (Math.random() * Math.PI) - Math.PI / 2;
+      const ang = Math.random() * Math.PI - Math.PI / 2;
       const dist = 40 + Math.random() * 60;
       const dx = Math.cos(ang) * dist;
       const dy = -Math.abs(Math.sin(ang) * dist) - (20 + Math.random() * 20);
       s.style.setProperty("--dx", `${dx}px`);
       s.style.setProperty("--dy", `${dy}px`);
-      s.style.setProperty("--spin", `${(Math.random() > 0.5 ? 1 : -1) * (180 + Math.floor(Math.random() * 180))}deg`);
+      s.style.setProperty(
+        "--spin",
+        `${(Math.random() > 0.5 ? 1 : -1) * (180 + Math.floor(Math.random() * 180))}deg`
+      );
       s.style.fontSize = `${22 + Math.random() * 10}px`;
 
       layer.appendChild(s);
@@ -233,10 +248,10 @@ function SignupInner() {
     }
 
     el.addEventListener("click", spawnOne);
-    el.addEventListener("touchend", spawnOne, { passive: true });
+    el.addEventListener("touchend", spawnOne as EventListener, { passive: true });
     return () => {
       el.removeEventListener("click", spawnOne);
-      el.removeEventListener("touchend", spawnOne);
+      el.removeEventListener("touchend", spawnOne as EventListener);
     };
   }, []);
 
@@ -280,9 +295,15 @@ function SignupInner() {
           <p className="uc-sub">{t.sub}</p>
 
           <div className="uc-ctas">
-            <Link href="/thanks" className="btn-primary uc-btn">{t.support}</Link>
-            <Link href="/about" className="btn-ghost uc-btn btn-pulse">{t.more}</Link>
-            <Link href="/" className="btn-ghost uc-btn">{t.back}</Link>
+            <Link href="/thanks" className="btn-primary uc-btn">
+              {t.support}
+            </Link>
+            <Link href="/about" className="btn-ghost uc-btn btn-pulse">
+              {t.more}
+            </Link>
+            <Link href="/" className="btn-ghost uc-btn">
+              {t.back}
+            </Link>
           </div>
         </article>
       </section>
@@ -354,7 +375,7 @@ function SignupInner() {
           text-align: center;
         }
 
-        /* ===== Badge (anti overflow en “sitio para computadora” móvil) ===== */
+        /* ===== Badge ===== */
         .uc-badge{
           font-weight: 600;
           letter-spacing: .2px;
@@ -412,12 +433,10 @@ function SignupInner() {
         .uc-btn{
           text-align: center;
           min-width: 220px;
-          /* anti overflow en “sitio para computadora” móvil */
           white-space: normal;
           overflow-wrap: anywhere;
           line-height: 1.15;
         }
-        /* defensivo para los estilos globales de botones */
         .btn-primary, .btn-ghost{
           white-space: normal;
           overflow-wrap: anywhere;
