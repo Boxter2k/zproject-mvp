@@ -205,7 +205,7 @@ function HomeInner() {
             "Si te pierdes, me chiflas. Soy GPS con glitter ✨",
             "Tu proyecto + un empujón = magia. Haz push.",
             "En ordenador vuelo. En móvil bailo. En ambos te acompaño.",
-            "¿Venías por arte o por chisme? Acá hay de los dos 😌"
+            "¿Venías por arte o por chisme? Acá hay de los dos 😌",
           ]
         : lang === "pt"
         ? [
@@ -227,7 +227,7 @@ function HomeInner() {
             "Se se perder, me chama. Sou um GPS com glitter ✨",
             "Seu projeto + um empurrão = mágica. Dá o push.",
             "No computador eu voo. No celular eu danço. Em ambos te acompanho.",
-            "Veio por arte ou fofoca? Aqui tem os dois 😌"
+            "Veio por arte ou fofoca? Aqui tem os dois 😌",
           ]
         : lang === "fr"
         ? [
@@ -249,7 +249,7 @@ function HomeInner() {
             "Si tu te perds, appelle-moi. Je suis un GPS avec des paillettes ✨",
             "Ton projet + un coup de pouce = magie. Push-le.",
             "Sur ordinateur je vole. Sur mobile je danse. Je t’accompagne partout.",
-            "Tu viens pour l’art ou pour les potins ? Ici, il y a les deux 😌"
+            "Tu viens pour l’art ou pour les potins ? Ici, il y a les deux 😌",
           ]
         : [
             "Hey! Welcome ✨",
@@ -270,7 +270,7 @@ function HomeInner() {
             "If you get lost, just call me. I’m GPS with glitter ✨",
             "Your project + a little push = magic. Go ship it.",
             "On desktop I fly. On mobile I dance. On both, I’m with you.",
-            "Came for the art or the gossip? We’ve got both 😌"
+            "Came for the art or the gossip? We’ve got both 😌",
           ],
     [lang]
   );
@@ -296,7 +296,7 @@ function HomeInner() {
   useEffect(() => {
     const icon =
       (document.querySelector(
-        'header a svg, header a img, header .site-logo svg, header .site-logo img, [data-logo-icon]'
+        "header a svg, header a img, header .site-logo svg, header .site-logo img, [data-logo-icon]"
       ) as HTMLElement) || null;
 
     const bubble = bubbleRef.current;
@@ -331,7 +331,7 @@ function HomeInner() {
 
         bubble.style.setProperty("--arrow-left", `${ARROW_LEFT_PX}px`);
         bubble.style.top = `${top}px`;
-        bubble.style.left = `${left}px`);
+        bubble.style.left = `${left}px`; // ✅ sin paréntesis extra
       });
     };
 
@@ -547,11 +547,11 @@ function HomeInner() {
         }
 
         .hero-zproject--XL { font-size: clamp(80px, 16vw, 200px); display: inline-block; position: relative; }
-        .hero-zproject .tm { 
-          font-size: 0.28em; 
-          margin-left: 0.25em; 
-          vertical-align: super; 
-          opacity: .6; 
+        .hero-zproject .tm {
+          font-size: 0.28em;
+          margin-left: 0.25em;
+          vertical-align: super;
+          opacity: .6;
           font-weight: 700;
           letter-spacing: .02em;
           line-height: 0;
@@ -559,11 +559,11 @@ function HomeInner() {
 
         /* Desktop: título + roller a la derecha (intacto) */
         .hero-wrap {
-          display: flex; 
-          align-items: flex-end; 
+          display: flex;
+          align-items: flex-end;
           gap: 0.6rem;
-          justify-content: flex-start; 
-          width: 100%; 
+          justify-content: flex-start;
+          width: 100%;
           margin-left: -2vw;
           flex-wrap: nowrap;
         }
@@ -650,11 +650,10 @@ function HomeInner() {
 
         /* ======== MÓVIL: centrado real, sin cortes, CTAs lado a lado ======== */
         @media (max-width: 900px) {
-          /* safe-area para que nada quede bajo el header/notch */
           main { padding-top: max(12px, env(safe-area-inset-top)); }
 
-          .hero-wrap { 
-            flex-direction: column;        /* título arriba, roller abajo */
+          .hero-wrap {
+            flex-direction: column;
             align-items: center;
             justify-content: center;
             gap: .7rem;
@@ -664,15 +663,15 @@ function HomeInner() {
           }
 
           .hero-zproject--XL{
-            font-size: clamp(52px, 15vw, 108px); /* más grande en phone */
+            font-size: clamp(52px, 15vw, 108px);
             line-height: .92;
             display: inline-block;
           }
 
-          .roller-window.fader-mode { 
+          .roller-window.fader-mode {
             --roller-nudge: 0px;
             transform: none;
-            max-width: 92vw;               /* el JS limitará aprox. a 82vw */
+            max-width: 92vw;
             min-width: 140px;
             padding: .7rem .9rem;
             border-radius: 12px;
@@ -683,7 +682,6 @@ function HomeInner() {
             line-height: 1.25;
           }
 
-          /* CTAs lado a lado */
           .hero-ctas{
             width: 100%;
             display: flex;
@@ -699,7 +697,6 @@ function HomeInner() {
             padding-left: 14px;
             padding-right: 14px;
           }
-          /* En pantallas muy pequeñas, permitir wrap */
           @media (max-width: 360px){
             .hero-ctas{ flex-wrap: wrap; }
             .hero-ctas .btn-primary, .hero-ctas .btn-ghost{
@@ -708,21 +705,19 @@ function HomeInner() {
             }
           }
 
-          /* CARDS: ocupar más ancho y con aire */
           .benefits{ grid-template-columns:1fr; gap:16px; }
           .b-card{ padding: 18px; }
           .steps{ grid-template-columns:1fr; gap:16px; }
           .steps .step:not(:last-child)::after{ display:none; }
 
-          .community{ 
-            grid-template-columns:1fr; 
-            text-align:left; 
-            gap:14px; 
-            padding:18px; 
+          .community{
+            grid-template-columns:1fr;
+            text-align:left;
+            gap:14px;
+            padding:18px;
           }
           .c-right{ justify-content:flex-start; }
 
-          /* Texto aspiracional con mejor legibilidad */
           .asp{ font-size: clamp(15px, 3.9vw, 18px); line-height: 1.35; }
         }
       `}</style>
