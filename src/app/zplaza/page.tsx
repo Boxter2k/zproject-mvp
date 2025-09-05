@@ -1,4 +1,5 @@
 // src/app/zplaza/page.tsx
+
 "use client";
 
 import Link from "next/link";
@@ -69,7 +70,7 @@ function ZPlazaInner() {
 
     // Token de sesión por pestaña para evitar doble avance en Strict Mode
     const sessKey = "__z_session_id";
-    // @ts-ignore
+    // @ts-expect-error — usamos un campo ad-hoc en window para un token efímero de sesión por pestaña
     const session = (window[sessKey] ||= Math.random().toString(36).slice(2));
 
     // Índice por idioma (para que no se mezclen)
@@ -99,8 +100,8 @@ function ZPlazaInner() {
   }, [lang, L.bubbles]);
 
   // refs
-  const iconRef = useRef<HTMLDivElement>(null);   // icono grande de la tarjeta
-  const layerRef = useRef<HTMLDivElement>(null);  // capa chispas
+  const iconRef = useRef<HTMLDivElement>(null); // icono grande de la tarjeta
+  const layerRef = useRef<HTMLDivElement>(null); // capa chispas
   const bubbleRef = useRef<HTMLDivElement>(null); // globo
 
   // Chispas al tocar el ícono de la tarjeta
@@ -131,7 +132,7 @@ function ZPlazaInner() {
   useEffect(() => {
     const icon =
       (document.querySelector(
-        'header a svg, header a img, header .site-logo svg, header .site-logo img, [data-logo-icon]'
+        "header a svg, header a img, header .site-logo svg, header .site-logo img, [data-logo-icon]"
       ) as HTMLElement) || null;
 
     const bubble = bubbleRef.current;
@@ -226,8 +227,12 @@ function ZPlazaInner() {
           <p className="ucard-lead">{L.lead}</p>
           <p className="ucard-sub">{L.sub}</p>
           <div className="ucard-ctas">
-            <Link href="/thanks" className="btn-primary">{L.support}</Link>
-            <Link href="/" className="btn-ghost">{L.back}</Link>
+            <Link href="/thanks" className="btn-primary">
+              {L.support}
+            </Link>
+            <Link href="/" className="btn-ghost">
+              {L.back}
+            </Link>
           </div>
         </article>
       </section>
@@ -309,7 +314,7 @@ function ZPlazaInner() {
           .uc-wrap{ padding-inline:12px; }
           .ucard{ width:100%; max-width:520px; padding:16px 16px; gap:12px; }
           .ucard-title{ font-size: clamp(20px,6.2vw,28px); }
-          .ucard-lead { font size: clamp(14px,4.2vw,17px); }
+          .ucard-lead { font-size: clamp(14px,4.2vw,17px); }
           .ucard-sub  { font-size: clamp(13px,3.9vw,16px); }
           .ucard-ctas { gap:10px; }
           .ucard-bg-emoji{ display:none; }
