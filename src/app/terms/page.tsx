@@ -33,12 +33,12 @@ function useReactiveLang() {
     const mo = new MutationObserver(refresh);
     mo.observe(document.documentElement, { attributes: true, attributeFilter: ["lang"] });
 
-    window.addEventListener("zproject:set-lang" as any, onCustom as EventListener);
+    // Pulso breve por si el selector de idioma setea async
+    window.addEventListener("zproject:set-lang", onCustom as EventListener);
     window.addEventListener("storage", onStorage);
 
-    // Pulso breve por si el selector de idioma setea async
-    let raf = 0,
-      t0 = performance.now();
+    let raf = 0;
+    const t0 = performance.now();
     const pump = (t: number) => {
       if (t - t0 < 800) {
         refresh();
@@ -48,7 +48,7 @@ function useReactiveLang() {
     raf = requestAnimationFrame(pump);
 
     return () => {
-      window.removeEventListener("zproject:set-lang" as any, onCustom as EventListener);
+      window.removeEventListener("zproject:set-lang", onCustom as EventListener);
       window.removeEventListener("storage", onStorage);
       mo.disconnect();
       cancelAnimationFrame(raf);
