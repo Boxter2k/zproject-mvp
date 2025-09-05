@@ -33,7 +33,6 @@ export default function PrivacyPage() {
 
     // b) evento personalizado (si tu selector lo emite)
     const onCustom = () => refreshLangFromCookie();
-    // @ts-expect-error – evento personalizado fuera de WindowEventMap
     window.addEventListener("zproject:set-lang", onCustom as EventListener);
 
     // c) atributo lang en [html]  ← ¡quitamos los < >
@@ -56,7 +55,6 @@ export default function PrivacyPage() {
 
     return () => {
       window.removeEventListener("storage", onStorage);
-      // @ts-expect-error – evento personalizado fuera de WindowEventMap
       window.removeEventListener("zproject:set-lang", onCustom as EventListener);
       mo.disconnect();
       cancelAnimationFrame(raf);
