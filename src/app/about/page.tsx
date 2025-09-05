@@ -120,7 +120,7 @@ function AboutInner() {
         title: "Um refúgio para a arte",
         text:
           "Percebemos logo que as plataformas existentes estavam cheias de métricas, tendências e algoritmos que podiam enterrar a alma de um criador. Não queríamos nossa voz afogada em números. ZProject precisava ser outra coisa: um refúgio, um santuário onde a arte respira, onde as ideias não se perdem e onde sonhadores são valorizados pelo que são, não pelo que geram.",
-        img: "/about/refugio.jpg",
+        img: "/about/refugio.gif",
         imgAlt: "Refúgio para a arte",
       },
       {
@@ -177,7 +177,7 @@ function AboutInner() {
         title: "Un refuge pour l’art",
         text:
           "Très vite, nous avons compris que les plateformes existantes étaient remplies de métriques, de tendances et d’algorithmes capables d’enterrer l’âme d’un créateur. Nous ne voulions pas que notre voix se noie dans les chiffres. ZProject devait être autre chose : un refuge, un sanctuaire où l’art respire, où les idées ne s’oublient pas et où les rêveurs sont valorisés pour ce qu’ils sont, pas pour ce qu’ils produisent.",
-        img: "/about/refugio.jpg",
+        img: "/about/refugio.gif",
         imgAlt: "Refuge pour l’art",
       },
       {
@@ -234,7 +234,7 @@ function AboutInner() {
         title: "A refuge for art",
         text:
           "We soon realized existing platforms were ruled by metrics, trends, and algorithms that could bury a creator’s soul. We didn’t want our voice drowned in numbers. ZProject had to be something else: a refuge, a sanctuary where art breathes, where ideas aren’t forgotten, and where dreamers are valued for who they are—not for what they yield.",
-        img: "/about/refugio.jpg",
+        img: "/about/refugio.gif",
         imgAlt: "A refuge for art",
       },
       {
