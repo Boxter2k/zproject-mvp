@@ -1,5 +1,4 @@
 // src/app/ztv/page.tsx
-
 "use client";
 
 import Link from "next/link";
@@ -107,8 +106,9 @@ function ZTVInner() {
 
     // sesión única por pestaña: evita doble avance en Strict Mode
     const sessKey = "__z_session_id";
-    // @ts-expect-error: guardamos un token efímero en window
-    const session = (window[sessKey] ||= Math.random().toString(36).slice(2));
+    // Alias tipado para indexar window con string sin usar ts-ignore/expect-error
+    const w = window as unknown as Record<string, string>;
+    const session = (w[sessKey] ||= Math.random().toString(36).slice(2));
 
     const key = `z_bubble_idx_ztv_${lang}`;        // índice por IDIOMA
     const guardKey = `${key}__last_session`;       // quién avanzó por última vez
