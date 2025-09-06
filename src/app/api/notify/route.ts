@@ -1,45 +1,63 @@
+// src/app/api/notify/route.ts
 import { NextResponse } from "next/server";
 
-const token = process.env.TELEGRAM_BOT_TOKEN!;
-const chatId = process.env.TELEGRAM_CHAT_ID!;
+export const runtime = "nodejs"; // asegura process.env en Vercel
 
-type TelegramAPIRes = {
-  ok: boolean;
-  result?: unknown;
-  error_code?: number;
-  description?: string;
-};
+type TgResponse = { ok: boolean; result?: unknown; error_code?: number; description?: string };
 
-type SendResult =
-  | { ok: true; status: number; data: TelegramAPIRes }
-  | { ok: false; status: number; data: TelegramAPIRes | { error: string } };
-
-async function send(text: string): Promise<SendResult> {
-  try {
-    const r = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id: chatId, text }),
-      cache: "no-store",
-    });
-    const data = (await r.json().catch(() => ({}))) as TelegramAPIRes;
-    if (r.ok && data?.ok) return { ok: true, status: r.status, data };
-    return { ok: false, status: r.status, data };
-  } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : String(e);
-    return { ok: false, status: 0, data: { error: msg } };
-  }
+function maskToken(tok: string) {
+  if (!tok) return "(empty)";
+  if (tok.length <= 12) return tok;
+  return tok.slice(0, 6) + "…***…" + tok.slice(-6);
 }
 
 export async function GET(req: Request) {
-  const text = new URL(req.url).searchParams.get("text") || "Ping from ZProject";
-  const res = await send(text);
-  return NextResponse.json(res);
-}
+  const url = new URL(req.url);
+  const text = url.searchParams.get("text") ?? "Ping desde /api/notify";
 
-export async function POST(req: Request) {
-  const body = (await req.json().catch(() => ({}))) as { text?: string };
-  const text = body?.text ?? "Ping from ZProject";
-  const res = await send(text);
-  return NextResponse.json(res);
+  const token = process.env.TELEGRAM_BOT_TOKEN || "";
+  const chatId = process.env.TELEGRAM_CHAT_ID || "";
+
+  if (!token || !chatId) {
+    return NextResponse.json(
+      {
+        ok: false,
+        reason: "Missing env",
+        hint: {
+          TELEGRAM_BOT_TOKEN: !!token,
+          TELEGRAM_CHAT_ID: !!chatId,
+        },
+      },
+      { status: 500 }
+    );
+  }
+
+  const tgUrl = `https://api.telegram.org/bot${encodeURIComponent(token)}/sendMessage`;
+
+  const tgRes = await fetch(tgUrl, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ chat_id: chatId, text }),
+  });
+
+  let data: TgResponse;
+  try {
+    data = (await tgRes.json()) as TgResponse;
+  } catch {
+    data = { ok: false, error_code: tgRes.status, description: "Non-JSON from Telegram" };
+  }
+
+  const debug = {
+    called_url: tgUrl.replace(token, maskToken(token)),
+    http_status: tgRes.status,
+    ok_from_telegram: data.ok,
+    tg_error_code: data.error_code ?? null,
+    tg_description: data.description ?? null,
+  };
+
+  if (!data.ok) {
+    return NextResponse.json({ ok: false, debug, data }, { status: 502 });
+  }
+
+  return NextResponse.json({ ok: true, debug, data });
 }
