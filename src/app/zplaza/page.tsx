@@ -1,5 +1,4 @@
 // src/app/zplaza/page.tsx
-
 "use client";
 
 import Link from "next/link";
@@ -70,8 +69,9 @@ function ZPlazaInner() {
 
     // Token de sesión por pestaña para evitar doble avance en Strict Mode
     const sessKey = "__z_session_id";
-    // @ts-expect-error — usamos un campo ad-hoc en window para un token efímero de sesión por pestaña
-    const session = (window[sessKey] ||= Math.random().toString(36).slice(2));
+    // Alias tipado para poder indexar con string sin usar ts-ignore/expect-error
+    const w = window as unknown as Record<string, string>;
+    const session = (w[sessKey] ||= Math.random().toString(36).slice(2));
 
     // Índice por idioma (para que no se mezclen)
     const key = `z_bubble_idx_zplaza_${lang}`;
