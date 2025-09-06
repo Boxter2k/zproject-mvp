@@ -1,63 +1,82 @@
-// src/app/api/notify/route.ts
-import { NextResponse } from "next/server";
+"use client";
 
-export const runtime = "nodejs"; // asegura process.env en Vercel
+import { useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 
-type TgResponse = { ok: boolean; result?: unknown; error_code?: number; description?: string };
+type Payload = {
+  type: "page_view" | "visit_start" | "visit_end";
+  path: string;
+  ref?: string | null;
+  lang?: string;
+  tz?: string;
+  vp?: { w: number; h: number };
+  uid?: string;            // ID anónimo por pestaña
+  durMS?: number;          // duración en ms (solo en visit_end)
+};
 
-function maskToken(tok: string) {
-  if (!tok) return "(empty)";
-  if (tok.length <= 12) return tok;
-  return tok.slice(0, 6) + "…***…" + tok.slice(-6);
-}
+export default function NotifyVisit() {
+  const pathname = usePathname();
+  const startedAtRef = useRef<number | null>(null);
+  const uidRef = useRef<string>("");
 
-export async function GET(req: Request) {
-  const url = new URL(req.url);
-  const text = url.searchParams.get("text") ?? "Ping desde /api/notify";
+  // uid por pestaña
+  useEffect(() => {
+    const k = "__z_uid";
+    uidRef.current = sessionStorage.getItem(k) || Math.random().toString(36).slice(2);
+    sessionStorage.setItem(k, uidRef.current);
+  }, []);
 
-  const token = process.env.TELEGRAM_BOT_TOKEN || "";
-  const chatId = process.env.TELEGRAM_CHAT_ID || "";
+  // arranque de visita
+  useEffect(() => {
+    startedAtRef.current = Date.now();
+    send("visit_start");
+    // fin de visita (salida/cierre)
+    const onBeforeUnload = () => send("visit_end");
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") send("visit_end");
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("beforeunload", onBeforeUnload);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  if (!token || !chatId) {
-    return NextResponse.json(
-      {
-        ok: false,
-        reason: "Missing env",
-        hint: {
-          TELEGRAM_BOT_TOKEN: !!token,
-          TELEGRAM_CHAT_ID: !!chatId,
-        },
-      },
-      { status: 500 }
-    );
+  // página vista en cada cambio de ruta (client-side)
+  useEffect(() => {
+    send("page_view");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
+
+  function send(type: Payload["type"]) {
+    const durMS =
+      type === "visit_end" && startedAtRef.current
+        ? Math.max(0, Date.now() - startedAtRef.current)
+        : undefined;
+
+    const payload: Payload = {
+      type,
+      path: window.location.pathname + window.location.search,
+      ref: document.referrer || null,
+      lang: navigator.language,
+      tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      vp: { w: window.innerWidth, h: window.innerHeight },
+      uid: uidRef.current,
+      durMS,
+    };
+
+    // anti-spam simple: no spamear si está en localhost
+    if (location.hostname === "localhost") return;
+
+    fetch("/api/notify", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(payload),
+      keepalive: type === "visit_end", // permite enviar al cerrar pestaña
+    }).catch(() => {});
   }
 
-  const tgUrl = `https://api.telegram.org/bot${encodeURIComponent(token)}/sendMessage`;
-
-  const tgRes = await fetch(tgUrl, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ chat_id: chatId, text }),
-  });
-
-  let data: TgResponse;
-  try {
-    data = (await tgRes.json()) as TgResponse;
-  } catch {
-    data = { ok: false, error_code: tgRes.status, description: "Non-JSON from Telegram" };
-  }
-
-  const debug = {
-    called_url: tgUrl.replace(token, maskToken(token)),
-    http_status: tgRes.status,
-    ok_from_telegram: data.ok,
-    tg_error_code: data.error_code ?? null,
-    tg_description: data.description ?? null,
-  };
-
-  if (!data.ok) {
-    return NextResponse.json({ ok: false, debug, data }, { status: 502 });
-  }
-
-  return NextResponse.json({ ok: true, debug, data });
+  return null; // no renderiza nada
 }
