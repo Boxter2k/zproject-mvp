@@ -1,35 +1,82 @@
 "use client";
+
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 
+type Payload = {
+  type: "page_view" | "visit_start" | "visit_end";
+  path: string;
+  ref?: string | null;
+  lang?: string;
+  tz?: string;
+  vp?: { w: number; h: number };
+  uid?: string;            // ID anónimo por pestaña
+  durMS?: number;          // duración en ms (solo en visit_end)
+};
+
 export default function NotifyVisit() {
   const pathname = usePathname();
-  const enterTsRef = useRef<number>(0);
+  const startedAtRef = useRef<number | null>(null);
+  const uidRef = useRef<string>("");
 
+  // uid por pestaña
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    const k = "__z_uid";
+    uidRef.current = sessionStorage.getItem(k) || Math.random().toString(36).slice(2);
+    sessionStorage.setItem(k, uidRef.current);
+  }, []);
 
-    const path = pathname || window.location.pathname + window.location.search;
-    const referrer = document.referrer || "";
-
-    // marcar entrada y enviar "view"
-    enterTsRef.current = performance.now();
-    fetch("/api/visit", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ event: "view", path, referrer }),
-      keepalive: true,
-    }).catch(() => {});
-
-    // al cambiar de ruta o cerrar, enviar "leave" con permanencia
-    return () => {
-      const ms = Math.max(0, performance.now() - enterTsRef.current);
-      const blob = new Blob([JSON.stringify({ event: "leave", path, ms })], {
-        type: "application/json",
-      });
-      navigator.sendBeacon("/api/visit", blob);
+  // arranque de visita
+  useEffect(() => {
+    startedAtRef.current = Date.now();
+    send("visit_start");
+    // fin de visita (salida/cierre)
+    const onBeforeUnload = () => send("visit_end");
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") send("visit_end");
     };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("beforeunload", onBeforeUnload);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // página vista en cada cambio de ruta (client-side)
+  useEffect(() => {
+    send("page_view");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
 
-  return null;
+  function send(type: Payload["type"]) {
+    const durMS =
+      type === "visit_end" && startedAtRef.current
+        ? Math.max(0, Date.now() - startedAtRef.current)
+        : undefined;
+
+    const payload: Payload = {
+      type,
+      path: window.location.pathname + window.location.search,
+      ref: document.referrer || null,
+      lang: navigator.language,
+      tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      vp: { w: window.innerWidth, h: window.innerHeight },
+      uid: uidRef.current,
+      durMS,
+    };
+
+    // anti-spam simple: no spamear si está en localhost
+    if (location.hostname === "localhost") return;
+
+    fetch("/api/notify", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(payload),
+      keepalive: type === "visit_end", // permite enviar al cerrar pestaña
+    }).catch(() => {});
+  }
+
+  return null; // no renderiza nada
 }
