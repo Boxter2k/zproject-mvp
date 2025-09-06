@@ -1,4 +1,3 @@
-// src/app/api/notify/route.ts
 import { NextResponse } from "next/server";
 
 const token  = process.env.TELEGRAM_BOT_TOKEN!;
@@ -9,14 +8,8 @@ async function send(text: string) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ chat_id: chatId, text }),
-    // evita que una navegación corte la petición
-    keepalive: true,
   });
-  if (!res.ok) {
-    console.error("Telegram error:", res.status, await res.text());
-    return false;
-  }
-  return true;
+  return res.ok;
 }
 
 export async function GET(req: Request) {
