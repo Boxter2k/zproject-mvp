@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import LanguageSwitcher from "./LanguageSwitcher";
 import { getT } from "../lib/i18n";
+import NotifyVisit from "./NotifyVisit";
 
 export default function SiteChrome({
   initialLang,
@@ -27,36 +28,30 @@ export default function SiteChrome({
   const t = useMemo(() => getT(lang), [lang]);
 
   useEffect(() => {
-    // Escucha el evento emitido por LanguageSwitcher
     function onLangChange(e: Event) {
-      // Tipamos el CustomEvent para evitar ts-expect-error
       const ce = e as CustomEvent<{ lang?: string }>;
-      const fromEvent = typeof ce.detail?.lang === "string" ? ce.detail.lang.toLowerCase() : undefined;
-
+      const fromEvent =
+        typeof ce.detail?.lang === "string" ? ce.detail.lang.toLowerCase() : undefined;
       if (fromEvent) {
         setLang(fromEvent);
         return;
       }
-
-      // Fallback: leer cookie
       try {
         const m = document.cookie.match(/(?:^|;\s*)zproject_lang=([^;]+)/);
         if (m?.[1]) setLang(m[1].toLowerCase());
       } catch {}
     }
-
     window.addEventListener("zproject:lang-change", onLangChange as EventListener);
-    return () => window.removeEventListener("zproject:lang-change", onLangChange as EventListener);
+    return () =>
+      window.removeEventListener("zproject:lang-change", onLangChange as EventListener);
   }, []);
 
-  // Cierra el menú móvil al navegar
   useEffect(() => {
     const close = () => setMenuOpen(false);
     window.addEventListener("hashchange", close);
     return () => window.removeEventListener("hashchange", close);
   }, []);
 
-  // Cerrar "Más" del footer al hacer click fuera / Esc / navegación
   useEffect(() => {
     function onDocClick(e: MouseEvent) {
       const t = e.target as Node;
@@ -83,6 +78,9 @@ export default function SiteChrome({
 
   return (
     <>
+      {/* 🔔 Notificador de visitas (no renderiza UI) */}
+      <NotifyVisit />
+
       {/* Header */}
       <header className="z-header">
         <div className="container header-inner">
@@ -115,7 +113,7 @@ export default function SiteChrome({
             <span className={`bar ${menuOpen ? "x3" : ""}`} />
           </button>
 
-          {/* NAV DESKTOP (traduce EN VIVO) */}
+          {/* NAV DESKTOP */}
           <nav className="nav" style={{ gap: ".6rem" }}>
             <Link href="/" className="nav-link">{t("nav.home")}</Link>
             <Link href="/zshop" className="nav-link">
@@ -127,11 +125,7 @@ export default function SiteChrome({
             <Link href="/zplaza" className="nav-link">
               {t("nav.zplaza")}<sup className="tm">™</sup>
             </Link>
-            <Link
-              href="/thanks"
-              className="btn-primary"
-              style={{ padding: ".55rem .9rem", lineHeight: 1 }}
-            >
+            <Link href="/thanks" className="btn-primary" style={{ padding: ".55rem .9rem", lineHeight: 1 }}>
               {t("nav.support")}
             </Link>
           </nav>
@@ -186,14 +180,10 @@ export default function SiteChrome({
             className="footer-links"
             style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: ".6rem", flexWrap: "wrap" }}
           >
-            {/* SIEMPRE visible */}
             <a className="footer-link" href="/about">Acerca</a>
-
-            {/* En desktop, Términos y Privacidad visibles como siempre */}
             <a className="footer-link footer-only-desktop" href="/terms">Términos</a>
             <a className="footer-link footer-only-desktop" href="/privacy">Privacidad</a>
 
-            {/* En móvil, se colapsan dentro de "Más" */}
             <div className="footer-more-wrap">
               <button
                 ref={moreBtnRef}
@@ -236,7 +226,7 @@ export default function SiteChrome({
             >
               <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                 <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"/>
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l-.06-.06a1.65 1.65 0 0 0-1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06-.06a1.65 1.65 0 0 0-.33 1.82V9c0 .67.4 1.27 1.02 1.54.18.08.38.12.58.12H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1z"/>
               </svg>
             </Link>
           </div>
@@ -246,7 +236,6 @@ export default function SiteChrome({
       {/* Estilos mínimos para brand + nav + drawer */}
       <style>{`
         .tm{ font-size:.62em; margin-left:.2em; vertical-align: super; opacity:.6; font-weight:700; letter-spacing:.02em; line-height:0; }
-
         .brand { display: inline-flex; align-items: center; gap: .55rem; text-decoration: none; }
         .brand-logo { width: 28px; height: 28px; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,.18); object-fit: contain; background: transparent; }
         .brand-name { font-weight: 800; letter-spacing: .2px; line-height: 1; }
@@ -256,96 +245,44 @@ export default function SiteChrome({
         .nav-link:active { transform: translateY(0); }
         @media (max-width: 900px){ .nav-link { padding: .5rem .55rem; } }
 
-        /* --- Hamburguesa --- */
-        .menu-toggle{
-          display:none; margin-left:auto; width:42px; height:42px; border-radius:10px;
-          border:1px solid rgba(34,197,94,.45); background: rgba(0,0,0,.35); backdrop-filter: blur(6px);
-        }
+        .menu-toggle{ display:none; margin-left:auto; width:42px; height:42px; border-radius:10px;
+          border:1px solid rgba(34,197,94,.45); background: rgba(0,0,0,.35); backdrop-filter: blur(6px); }
         .menu-toggle .bar{ display:block; width:20px; height:2px; margin:5px auto; background: currentColor; transition: transform .2s ease, opacity .2s ease; }
         .menu-toggle .bar.x1{ transform: translateY(7px) rotate(45deg); }
         .menu-toggle .bar.x2{ opacity:0; }
         .menu-toggle .bar.x3{ transform: translateY(-7px) rotate(-45deg); }
 
-        /* --- Drawer móvil --- */
-        .mobile-drawer{
-          position: fixed; inset: 0; display:none;
-        }
+        .mobile-drawer{ position: fixed; inset: 0; display:none; }
         .mobile-drawer.is-open{ display:block; }
-        .drawer-backdrop{
-          position: absolute; inset: 0; background: rgba(0,0,0,.35); backdrop-filter: blur(2px);
-        }
-        .mobile-drawer__inner{
-          position: absolute; right: 0; top: 60px; /* bajo el header */
-          width: min(92vw, 380px);
-          max-width: 100vw;
-        }
-        .mobile-nav{
-          position: relative; z-index: 2;
-          display: grid; gap: 10px;
-          border: 1px solid rgba(34,197,94,.28);
-          background: color-mix(in oklab, var(--background), transparent 0%);
-          box-shadow: 0 10px 24px rgba(0,0,0,.25);
-          border-radius: 14px; padding: 12px;
-        }
-        .mobile-link{
-          display:block; padding:.8rem .9rem; border-radius:10px; border:1px solid transparent;
-          color: color-mix(in oklab, var(--foreground), transparent 8%);
-        }
+        .drawer-backdrop{ position: absolute; inset: 0; background: rgba(0,0,0,.35); backdrop-filter: blur(2px); }
+        .mobile-drawer__inner{ position: absolute; right: 0; top: 60px; width: min(92vw, 380px); max-width: 100vw; }
+        .mobile-nav{ position: relative; z-index: 2; display: grid; gap: 10px; border: 1px solid rgba(34,197,94,.28);
+          background: color-mix(in oklab, var(--background), transparent 0%); box-shadow: 0 10px 24px rgba(0,0,0,.25);
+          border-radius: 14px; padding: 12px; }
+        .mobile-link{ display:block; padding:.8rem .9rem; border-radius:10px; border:1px solid transparent;
+          color: color-mix(in oklab, var(--foreground), transparent 8%); }
         .mobile-link:hover{ border-color: rgba(34,197,94,.35); background: rgba(0,0,0,.22); color: inherit; }
         .mobile-cta{ width:100%; justify-content:center; }
         .mobile-lang{ margin-top: 4px; }
 
-        /* Breakpoints: en móvil, oculta nav desktop y muestra hamburguesa */
-        @media (max-width: 900px){
-          .nav{ display:none; }
-          .menu-toggle{ display:inline-flex; align-items:center; justify-content:center; }
-        }
+        @media (max-width: 900px){ .nav{ display:none; } .menu-toggle{ display:inline-flex; align-items:center; justify-content:center; } }
 
-        /* ----- Footer More (solo móvil) ----- */
         .footer-more-wrap{ position: relative; }
-        .footer-more-btn{
-          display: none; /* oculto en desktop */
-          align-items: center; justify-content: center;
-          width: 38px; height: 38px; border-radius: 10px;
-          border: 1px solid rgba(34,197,94,.35);
-          background: color-mix(in oklab, var(--background), transparent 10%);
-          color: color-mix(in oklab, var(--foreground), transparent 0%);
-          backdrop-filter: blur(6px);
-          transition: border-color .2s ease, background .2s ease, color .2s ease, transform .08s ease;
-        }
+        .footer-more-btn{ display: none; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 10px;
+          border: 1px solid rgba(34,197,94,.35); background: color-mix(in oklab, var(--background), transparent 10%);
+          color: color-mix(in oklab, var(--foreground), transparent 0%); backdrop-filter: blur(6px);
+          transition: border-color .2s ease, background .2s ease, color .2s ease, transform .08s ease; }
         .footer-more-btn:hover{ border-color: rgba(34,197,94,.55); transform: translateY(-1px); }
-        .footer-more-btn:active{ transform: translateY(0); }
-
-        .footer-more-menu{
-          position: absolute;
-          bottom: calc(100% + 8px);
-          right: 0;
-          display: none;
-          min-width: 160px;
-          max-width: calc(100vw - 24px);
-          padding: 6px;
-          border-radius: 12px;
-          border: 1px solid rgba(34,197,94,.28);
-          background: color-mix(in oklab, var(--background), transparent 0%);
-          box-shadow: 0 10px 24px rgba(0,0,0,.25);
-          z-index: 8;
-        }
+        .footer-more-menu{ position: absolute; bottom: calc(100% + 8px); right: 0; display: none; min-width: 160px;
+          max-width: calc(100vw - 24px); padding: 6px; border-radius: 12px; border: 1px solid rgba(34,197,94,.28);
+          background: color-mix(in oklab, var(--background), transparent 0%); box-shadow: 0 10px 24px rgba(0,0,0,.25); z-index: 8; }
         .footer-more-menu.is-open{ display: block; }
-        .footer-more-item{
-          display:block; padding:.6rem .7rem; border-radius:10px; text-decoration:none;
-          color: inherit; border: 1px solid transparent;
-        }
+        .footer-more-item{ display:block; padding:.6rem .7rem; border-radius:10px; text-decoration:none; color: inherit; border: 1px solid transparent; }
         .footer-more-item:hover{ background: rgba(0,0,0,.18); border-color: rgba(34,197,94,.35); }
-
         .footer-only-desktop{ display: inline-flex; }
-        @media (max-width:900px){
-          .footer-only-desktop{ display:none; }              /* oculta Términos/Privacidad directos */
-          .footer-more-btn{ display:inline-flex; }           /* muestra botón Más */
-          .footer-inner{ flex-wrap: wrap; }
-          .footer-links{ gap: .5rem !important; }
-        }
+        @media (max-width:900px){ .footer-only-desktop{ display:none; } .footer-more-btn{ display:inline-flex; }
+          .footer-inner{ flex-wrap: wrap; } .footer-links{ gap: .5rem !important; } }
 
-        /* A11y helper */
         .sr-only{ position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); border:0; }
       `}</style>
     </>
