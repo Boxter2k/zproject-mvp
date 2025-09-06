@@ -33,10 +33,10 @@ function useReactiveLang() {
     const mo = new MutationObserver(refresh);
     mo.observe(document.documentElement, { attributes: true, attributeFilter: ["lang"] });
 
-    // Pulso breve por si el selector de idioma setea async
     window.addEventListener("zproject:set-lang", onCustom as EventListener);
     window.addEventListener("storage", onStorage);
 
+    // Pulso breve por si el selector de idioma setea async
     let raf = 0;
     const t0 = performance.now();
     const pump = (t: number) => {
@@ -220,15 +220,17 @@ export default function TermsPage() {
   const [bubbleText, setBubbleText] = useState<string>("");
 
   useEffect(() => {
-    const choices = T.bubbles;
-    let txt = choices[0];
+    // ⚠️ Forzamos a string[] para evitar unions de literales demasiado estrictos
+    const choices = (T.bubbles as unknown as string[]) || [];
+    let txt: string = choices[0] || "";
     try {
       const key = "z_bubble_idx_terms";
       const prev = Number((typeof window !== "undefined" ? window.localStorage?.getItem(key) : "0") || "0");
       const idx = isNaN(prev) ? 0 : prev;
-      txt = choices[idx % choices.length];
+      txt = choices.length ? choices[idx % choices.length] : (choices[0] || "");
       if (typeof window !== "undefined") {
-        window.localStorage?.setItem(key, String((idx + 1) % choices.length));
+        const next = choices.length ? (idx + 1) % choices.length : 0;
+        window.localStorage?.setItem(key, String(next));
       }
     } catch {}
     setBubbleText(txt);
@@ -948,7 +950,7 @@ export default function TermsPage() {
             <h2>{H.s14}</h2>
             <p>
               {is("es") &&
-                "En la medida permitida por la ley, no seremos responsables de daños indirectos o pérdida de datos/beneficios derivados del uso o imposibilidad de uso del Servicio."}
+                "En la medida permitida por la ley, no seremos responsables de daños indirectos o pérdida de datos/beneficios derivados del uso ou imposibilidad de uso del Servicio."}
               {is("en") &&
                 "To the extent permitted by law, we’re not liable for indirect damages or loss of data/profits arising from use or inability to use the Service."}
               {is("pt") &&
