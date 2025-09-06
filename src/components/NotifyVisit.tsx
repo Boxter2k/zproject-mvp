@@ -1,25 +1,35 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 
 export default function NotifyVisit() {
+  const pathname = usePathname();
+  const enterTsRef = useRef<number>(0);
+
   useEffect(() => {
-    // 1 vez por pestaña para no spamear (y evita doble efecto de StrictMode)
-    if (sessionStorage.getItem("__z_notified")) return;
-    sessionStorage.setItem("__z_notified", "1");
+    if (typeof window === "undefined") return;
 
-    const tz   = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    const lang = navigator.language;
-    const path = location.pathname;
+    const path = pathname || window.location.pathname + window.location.search;
+    const referrer = document.referrer || "";
 
-    fetch("/api/notify", {
+    // marcar entrada y enviar "view"
+    enterTsRef.current = performance.now();
+    fetch("/api/visit", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        text: `👋 Nueva visita\n• Path: ${path}\n• Lang: ${lang}\n• TZ: ${tz}`,
-      }),
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ event: "view", path, referrer }),
       keepalive: true,
     }).catch(() => {});
-  }, []);
+
+    // al cambiar de ruta o cerrar, enviar "leave" con permanencia
+    return () => {
+      const ms = Math.max(0, performance.now() - enterTsRef.current);
+      const blob = new Blob([JSON.stringify({ event: "leave", path, ms })], {
+        type: "application/json",
+      });
+      navigator.sendBeacon("/api/visit", blob);
+    };
+  }, [pathname]);
 
   return null;
 }
