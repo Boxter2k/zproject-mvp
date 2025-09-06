@@ -1,82 +1,78 @@
-"use client";
+// src/app/api/notify/route.ts
+import { NextRequest, NextResponse } from "next/server";
 
-import { useEffect, useRef } from "react";
-import { usePathname } from "next/navigation";
+const BOT = process.env.TELEGRAM_BOT_TOKEN!;
+const CHATS = (process.env.TELEGRAM_CHAT_IDS || process.env.TELEGRAM_CHAT_ID || "")
+  .split(",")
+  .map(s => s.trim())
+  .filter(Boolean);
 
-type Payload = {
-  type: "page_view" | "visit_start" | "visit_end";
-  path: string;
-  ref?: string | null;
-  lang?: string;
-  tz?: string;
-  vp?: { w: number; h: number };
-  uid?: string;            // ID anónimo por pestaña
-  durMS?: number;          // duración en ms (solo en visit_end)
-};
+export async function POST(req: NextRequest) {
+  try {
+    const data = await req.json();
 
-export default function NotifyVisit() {
-  const pathname = usePathname();
-  const startedAtRef = useRef<number | null>(null);
-  const uidRef = useRef<string>("");
+    // Enriquecimiento desde cabeceras de Vercel/Proxy
+    const country = req.headers.get("x-vercel-ip-country") || "??";
+    const city = req.headers.get("x-vercel-ip-city") || "";
+    const ua = req.headers.get("user-agent") || "";
+    const ip =
+      req.headers.get("x-real-ip") ||
+      (req.headers.get("x-forwarded-for") || "").split(",")[0].trim() ||
+      "";
 
-  // uid por pestaña
-  useEffect(() => {
-    const k = "__z_uid";
-    uidRef.current = sessionStorage.getItem(k) || Math.random().toString(36).slice(2);
-    sessionStorage.setItem(k, uidRef.current);
-  }, []);
+    const type: string = data?.type || "page_view";
+    const path: string = data?.path || "/";
+    const ref: string | null = data?.ref || null;
+    const lang: string | undefined = data?.lang;
+    const tz: string | undefined = data?.tz;
+    const vp = data?.vp as { w?: number; h?: number } | undefined;
+    const uid: string | undefined = data?.uid;
+    const durMS: number | undefined = data?.durMS;
 
-  // arranque de visita
-  useEffect(() => {
-    startedAtRef.current = Date.now();
-    send("visit_start");
-    // fin de visita (salida/cierre)
-    const onBeforeUnload = () => send("visit_end");
-    const onVisibility = () => {
-      if (document.visibilityState === "hidden") send("visit_end");
-    };
-    window.addEventListener("beforeunload", onBeforeUnload);
-    document.addEventListener("visibilitychange", onVisibility);
-    return () => {
-      window.removeEventListener("beforeunload", onBeforeUnload);
-      document.removeEventListener("visibilitychange", onVisibility);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    const dur = typeof durMS === "number" ? `${Math.round(durMS / 1000)}s` : undefined;
 
-  // página vista en cada cambio de ruta (client-side)
-  useEffect(() => {
-    send("page_view");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname]);
+    const title =
+      type === "visit_start" ? "🟢 VISITA"
+      : type === "visit_end" ? "🔴 SALIDA"
+      : "📄 PAGE VIEW";
 
-  function send(type: Payload["type"]) {
-    const durMS =
-      type === "visit_end" && startedAtRef.current
-        ? Math.max(0, Date.now() - startedAtRef.current)
-        : undefined;
+    const lines = [
+      `${title}  ${path}`,
+      ref ? `↩︎ Ref: ${ref}` : undefined,
+      `🌍 ${country}${city ? " · " + city : ""}`,
+      lang || tz ? `🗣 ${lang || "?"} · ⏰ ${tz || "?"}` : undefined,
+      vp?.w && vp?.h ? `🖥 ${vp.w}×${vp.h}` : undefined,
+      dur ? `⏱ ${dur}` : undefined,
+      uid ? `🆔 ${uid}` : undefined,
+      `📡 ${ip}`,
+      `🧭 ${ua}`,
+    ].filter(Boolean);
+    const text = lines.join("\n");
 
-    const payload: Payload = {
-      type,
-      path: window.location.pathname + window.location.search,
-      ref: document.referrer || null,
-      lang: navigator.language,
-      tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      vp: { w: window.innerWidth, h: window.innerHeight },
-      uid: uidRef.current,
-      durMS,
-    };
+    if (!BOT || CHATS.length === 0) {
+      // No hay configuración de Telegram: no rompemos nada.
+      return NextResponse.json({ ok: true, skipped: true });
+    }
 
-    // anti-spam simple: no spamear si está en localhost
-    if (location.hostname === "localhost") return;
+    const url = `https://api.telegram.org/bot${BOT}/sendMessage`;
+    await Promise.all(
+      CHATS.map((chat) =>
+        fetch(url, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ chat_id: chat, text }),
+        })
+      )
+    );
 
-    fetch("/api/notify", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(payload),
-      keepalive: type === "visit_end", // permite enviar al cerrar pestaña
-    }).catch(() => {});
+    return NextResponse.json({ ok: true });
+  } catch {
+    // Nunca rompemos el build por errores de runtime
+    return NextResponse.json({ ok: false }, { status: 200 });
   }
+}
 
-  return null; // no renderiza nada
+export async function GET() {
+  // Útil para probar rápidamente en el navegador
+  return NextResponse.json({ ok: true, pong: "notify api up" });
 }
